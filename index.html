@@ -324,113 +324,49 @@ async function readSerialOCR(input) {
   const output = document.getElementById("ocrText");
 
   let worker = null;
-  let imageUrl = null;
-
   input.disabled = true;
-  details.style.display = "none";
-  status.textContent = "⏳ تحسين الصورة وقراءة الرقم...";
+
+  status.textContent = "⏳ جارٍ تحليل الصورة الأصلية...";
+  details.style.display = "block";
+  output.textContent = "انتظار نتيجة OCR...";
 
   try {
-    // تحميل الصورة
-    imageUrl = URL.createObjectURL(file);
-    const image = new Image();
-    image.src = imageUrl;
-    await image.decode();
-
-    // تجربة خاصة بالصورة الحالية:
-    // عزل المنطقة السفلية التي تحتوي رقم S/N
-    const cropY = Math.floor(image.height * 0.55);
-    const cropHeight = image.height - cropY;
-    const scale = 3;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = image.width * scale;
-    canvas.height = cropHeight * scale;
-
-    const ctx = canvas.getContext("2d", {
-      willReadFrequently: true
-    });
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.drawImage(
-      image,
-      0, cropY,
-      image.width, cropHeight,
-      0, 0,
-      canvas.width, canvas.height
-    );
-
-    // تحويل إلى أبيض وأسود وتحسين التباين
-    const pixels = ctx.getImageData(
-      0, 0, canvas.width, canvas.height
-    );
-
-    for (let i = 0; i < pixels.data.length; i += 4) {
-      const gray =
-        0.299 * pixels.data[i] +
-        0.587 * pixels.data[i + 1] +
-        0.114 * pixels.data[i + 2];
-
-
-    const value = Math.max(
-      0,
-      Math.min(255, Math.round((gray - 128) * 1.3 + 128))
-    );
-
-      pixels.data[i] = value;
-      pixels.data[i + 1] = value;
-      pixels.data[i + 2] = value;
-    }
-
-    ctx.putImageData(pixels, 0, 0);
-
-    // OCR مخصص لسطر واحد
+    // قراءة الصورة الأصلية كاملة دون اقتصاص
     worker = await Tesseract.createWorker("eng");
 
     await worker.setParameters({
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
-      tessedit_char_whitelist:
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+      tessedit_pageseg_mode: "11"
     });
 
-    const result = await worker.recognize(canvas);
+    const result = await worker.recognize(file);
+    const text = result.data.text || "";
 
-    const text = (result.data.text || "")
-      .toUpperCase()
-      .replace(/\s+/g, "")
-      .trim();
+    output.textContent = text || "لم يُتعرف على أي حرف";
 
-    output.textContent = text || "لم يُستخرج نص";
-    details.style.display = "block";
+    // اقتراح الرقم فقط إذا ظهر S/N بوضوح
+    const match = text.match(
+      /(?:S\s*\/\s*N|Serial\s*(?:No|Number)?)\s*[:\-]?\s*([A-Z0-9-]{8,})/i
+    );
 
-    if (/^[A-Z0-9]{8,30}$/.test(text)) {
-      document.getElementById("serial").value = text;
+    if (match) {
+      document.getElementById("serial").value =
+        match[1].trim();
 
       status.textContent =
-        "🔎 الرقم المحتمل: " + text +
-        " — تحقق من مطابقته للملصق قبل الحفظ.";
+        "✅ تم العثور على رقم محتمل. تحقق منه قبل الحفظ.";
     } else {
       status.textContent =
-        "⚠️ تعذرت القراءة الدقيقة. " +
-        "يرجى إدخال الرقم يدويًا.";
+        "اكتملت القراءة. راجع النص المستخرج أدناه.";
     }
 
   } catch (error) {
-    status.textContent =
-      "❌ خطأ: " + error.message;
-
+    status.textContent = "❌ " + error.message;
   } finally {
     if (worker) await worker.terminate();
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
     input.disabled = false;
     input.value = "";
   }
 }
-
-
-
 </script>
 </body>
 </html>
