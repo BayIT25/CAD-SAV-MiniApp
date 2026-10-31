@@ -7,8 +7,7 @@
         content="width=device-width, initial-scale=1">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/@zxing/browser@0.2.1"></script>
-
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <title>CAD SAV</title>
 
@@ -53,24 +52,24 @@
     📷 مسح Barcode
   </button>
 
-
   <div id="barcodePanel" style="display:none; margin-top:12px;">
   
-    <video id="barcodeVideo"
-           autoplay playsinline muted
-           style="width:100%; border-radius:10px;">
-    </video>
+    <div id="barcodeReader" style="width:100%;"></div>
   
     <p id="barcodeStatus">
-      وجّه الكاميرا إلى Barcode وانتظر القراءة التلقائية.
+      وجّه الكاميرا نحو الخطوط وانتظر القراءة.
     </p>
   
-    <button type="button" onclick="captureBarcode()">
-      📸 التقاط وتحليل الصورة
-    </button>
+    <label>أو اختر صورة واضحة للباركود:</label>
+    <input
+      id="barcodeFile"
+      type="file"
+      accept="image/*"
+      onchange="readBarcodeImage(this)"
+    >
   
     <button type="button" onclick="stopBarcode()">
-      إلغاء المسح
+      إغلاق الماسح
     </button>
   
   </div>
@@ -168,102 +167,132 @@
 let barcodeControls = null;
 let barcodeStarting = false;
 
-async function scanBarcode() {
-  if (barcodeStarting || barcodeControls) return;
 
-  const panel = document.getElementById("barcodePanel");
-  const video = document.getElementById("barcodeVideo");
+let barcodeScanner = null;
+let barcodeBusy = false;
+let barcodeDetected = false;
 
-  panel.style.display = "block";
-  barcodeStarting = true;
+function barcodeStatus(text) {
+  document.getElementById("barcodeStatus").textContent = text;
+}
 
-  try {
-    if (!window.ZXingBrowser) {
-      throw new Error("مكتبة قراءة Barcode غير متاحة");
-    }
+function getBarcodeScanner() {
+  if (!barcodeScanner) {
+    const F = Html5QrcodeSupportedFormats;
 
-    const reader =
-      new ZXingBrowser.BrowserMultiFormatOneDReader();
-
-    barcodeControls = await reader.decodeFromConstraints(
+    barcodeScanner = new Html5Qrcode(
+      "barcodeReader",
       {
-        audio: false,
-        video: {
-          facingMode: { ideal: "environment" }
-        }
-      },
-      video,
-      (result, error, controls) => {
-        if (result) {
-          document.getElementById("serial").value =
-            result.getText();
-
-          controls.stop();
-          barcodeControls = null;
-          panel.style.display = "none";
-
-          tg.showAlert("تمت قراءة Barcode بنجاح");
-        }
+        formatsToSupport: [
+          F.CODE_128,
+          F.CODE_39,
+          F.CODE_93,
+          F.EAN_13,
+          F.EAN_8,
+          F.UPC_A
+        ],
+        verbose: false
       }
     );
-
-  } catch (error) {
-    panel.style.display = "none";
-    tg.showAlert("تعذر تشغيل القارئ: " + error.message);
-  } finally {
-    barcodeStarting = false;
   }
+  return barcodeScanner;
 }
 
-function stopBarcode() {
-  if (barcodeControls) {
-    barcodeControls.stop();
-    barcodeControls = null;
-  }
+async function scanBarcode() {
+  if (barcodeBusy) return;
+  barcodeBusy = true;
+  barcodeDetected = false;
 
-  document.getElementById("barcodePanel").style.display =
-    "none";
-}
-
-async function captureBarcode() {
-  const video = document.getElementById("barcodeVideo");
-  const status = document.getElementById("barcodeStatus");
-
-  if (!video.videoWidth || !video.videoHeight) {
-    status.textContent = "الكاميرا غير جاهزة بعد";
-    return;
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  const context = canvas.getContext("2d");
-  context.drawImage(video, 0, 0);
-
-  status.textContent = "⏳ جارٍ تحليل الصورة...";
+  document.getElementById("barcodePanel").style.display = "block";
 
   try {
-    const reader =
-      new ZXingBrowser.BrowserMultiFormatOneDReader();
+    const scanner = getBarcodeScanner();
 
-    const result = await reader.decodeFromImageUrl(
-      canvas.toDataURL("image/png")
+    barcodeStatus("جارٍ تشغيل الكاميرا...");
+
+    await scanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 12,
+        qrbox: (w, h) => ({
+          width: Math.min(300, Math.floor(w * 0.9)),
+          height: Math.min(110, Math.floor(h * 0.4))
+        }),
+        aspectRatio: 1.7778
+      },
+      async (decodedText) => {
+        if (barcodeDetected) return;
+        barcodeDetected = true;
+        await barcodeSuccess(decodedText);
+      },
+      () => {}
     );
 
-    const serial = result.getText();
-
-    document.getElementById("serial").value = serial;
-
-    stopBarcode();
-
-    tg.showAlert("✅ تمت قراءة الرقم: " + serial);
+    if (!barcodeDetected) {
+      barcodeStatus("قرّب الباركود حتى تظهر الخطوط واضحة داخل الإطار.");
+    }
 
   } catch (error) {
-    status.textContent =
-      "لم يُكتشف Barcode. قرّب الكاميرا أو حسّن الإضاءة.";
+    barcodeStatus("تعذر تشغيل الكاميرا: " + error.message);
+  } finally {
+    barcodeBusy = false;
   }
 }
+
+async function barcodeSuccess(value) {
+  document.getElementById("serial").value = value;
+
+  await stopBarcode();
+
+  tg.showAlert("تمت القراءة: " + value);
+}
+
+async function stopBarcode() {
+  const scanner = barcodeScanner;
+
+  if (scanner) {
+    try {
+      if (scanner.isScanning) {
+        await scanner.stop();
+      }
+      scanner.clear();
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+
+  barcodeScanner = null;
+  barcodeBusy = false;
+
+  document.getElementById("barcodePanel").style.display = "none";
+}
+
+async function readBarcodeImage(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    barcodeStatus("جارٍ تحليل الصورة...");
+
+    const scanner = getBarcodeScanner();
+
+    if (scanner.isScanning) {
+      await scanner.stop();
+    }
+
+    const value = await scanner.scanFile(file, false);
+
+    await barcodeSuccess(value);
+
+  } catch (error) {
+    barcodeStatus(
+      "لم يتم التعرف على الباركود. جرب صورة أوضح."
+    );
+  } finally {
+    input.value = "";
+  }
+}
+
 
 </script>
 </body>
