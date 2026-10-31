@@ -7,6 +7,8 @@
         content="width=device-width, initial-scale=1">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/@zxing/browser@0.2.1"></script>
+
 
   <title>CAD SAV</title>
 
@@ -46,6 +48,22 @@
   <button type="button" onclick="scanQR()">
     📷 مسح QR Code
   </button>
+  
+  <button type="button" onclick="scanBarcode()">
+    📷 مسح Barcode
+  </button>
+
+  <div id="barcodePanel" style="display:none; margin-top:12px;">
+    <video id="barcodeVideo"
+           autoplay playsinline muted
+           style="width:100%; border-radius:10px;">
+    </video>
+  
+    <button type="button" onclick="stopBarcode()">
+      إيقاف الكاميرا
+    </button>
+  </div>
+
 
 
   <br><br>
@@ -137,6 +155,66 @@
       }
     );
   }
-  </script>
+    
+let barcodeControls = null;
+let barcodeStarting = false;
+
+async function scanBarcode() {
+  if (barcodeStarting || barcodeControls) return;
+
+  const panel = document.getElementById("barcodePanel");
+  const video = document.getElementById("barcodeVideo");
+
+  panel.style.display = "block";
+  barcodeStarting = true;
+
+  try {
+    if (!window.ZXingBrowser) {
+      throw new Error("مكتبة قراءة Barcode غير متاحة");
+    }
+
+    const reader =
+      new ZXingBrowser.BrowserMultiFormatOneDReader();
+
+    barcodeControls = await reader.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" }
+        }
+      },
+      video,
+      (result, error, controls) => {
+        if (result) {
+          document.getElementById("serial").value =
+            result.getText();
+
+          controls.stop();
+          barcodeControls = null;
+          panel.style.display = "none";
+
+          tg.showAlert("تمت قراءة Barcode بنجاح");
+        }
+      }
+    );
+
+  } catch (error) {
+    panel.style.display = "none";
+    tg.showAlert("تعذر تشغيل القارئ: " + error.message);
+  } finally {
+    barcodeStarting = false;
+  }
+}
+
+function stopBarcode() {
+  if (barcodeControls) {
+    barcodeControls.stop();
+    barcodeControls = null;
+  }
+
+  document.getElementById("barcodePanel").style.display =
+    "none";
+}
+</script>
 </body>
 </html>
