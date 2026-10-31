@@ -314,8 +314,9 @@ async function readBarcodeImage(input) {
   }
 }
 
+
 async function readSerialOCR(input) {
-  const file = input.files[0];
+  const file = input.files?.[0];
   if (!file) return;
 
   const status = document.getElementById("ocrStatus");
@@ -323,49 +324,107 @@ async function readSerialOCR(input) {
   const output = document.getElementById("ocrText");
 
   let worker = null;
+  let imageUrl = null;
+
   input.disabled = true;
   details.style.display = "none";
-  status.textContent = "⏳ جارٍ قراءة الصورة...";
+  status.textContent = "⏳ تحسين الصورة وقراءة الرقم...";
 
   try {
-    worker = await Tesseract.createWorker("eng");
+    // تحميل الصورة
+    imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.src = imageUrl;
+    await image.decode();
 
-    const result = await worker.recognize(file);
-    const text = result.data.text || "";
+    // تجربة خاصة بالصورة الحالية:
+    // عزل المنطقة السفلية التي تحتوي رقم S/N
+    const cropY = Math.floor(image.height * 0.55);
+    const cropHeight = image.height - cropY;
+    const scale = 3;
 
-    output.textContent = text;
-    details.style.display = "block";
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width * scale;
+    canvas.height = cropHeight * scale;
 
-    // نبحث عن S/N أو Serial Number
-    const match = text.match(
-      /(?:S\s*\/\s*N|S\.?N\.?|Serial\s*(?:No\.?|Number)?)\s*[:：-]?\s*([A-Z0-9][A-Z0-9-]{5,})/i
+    const ctx = canvas.getContext("2d", {
+      willReadFrequently: true
+    });
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(
+      image,
+      0, cropY,
+      image.width, cropHeight,
+      0, 0,
+      canvas.width, canvas.height
     );
 
-    if (match) {
-      const serial = match[1].trim();
+    // تحويل إلى أبيض وأسود وتحسين التباين
+    const pixels = ctx.getImageData(
+      0, 0, canvas.width, canvas.height
+    );
 
-      document.getElementById("serial").value = serial;
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      const gray =
+        0.299 * pixels.data[i] +
+        0.587 * pixels.data[i + 1] +
+        0.114 * pixels.data[i + 2];
+
+      const value = gray < 135 ? 0 : 255;
+
+      pixels.data[i] = value;
+      pixels.data[i + 1] = value;
+      pixels.data[i + 2] = value;
+    }
+
+    ctx.putImageData(pixels, 0, 0);
+
+    // OCR مخصص لسطر واحد
+    worker = await Tesseract.createWorker("eng");
+
+    await worker.setParameters({
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    });
+
+    const result = await worker.recognize(canvas);
+
+    const text = (result.data.text || "")
+      .toUpperCase()
+      .replace(/\s+/g, "")
+      .trim();
+
+    output.textContent = text || "لم يُستخرج نص";
+    details.style.display = "block";
+
+    if (/^[A-Z0-9]{8,30}$/.test(text)) {
+      document.getElementById("serial").value = text;
 
       status.textContent =
-        "✅ الرقم المحتمل: " + serial +
-        " — يرجى مقارنته بالملصق قبل الحفظ.";
-
+        "🔎 الرقم المحتمل: " + text +
+        " — تحقق من مطابقته للملصق قبل الحفظ.";
     } else {
       status.textContent =
-        "⚠️ لم أتعرف على S/N تلقائيًا. " +
-        "راجع النص المستخرج واكتب الرقم الصحيح.";
+        "⚠️ تعذرت القراءة الدقيقة. " +
+        "يرجى إدخال الرقم يدويًا.";
     }
 
   } catch (error) {
     status.textContent =
-      "❌ فشلت قراءة الصورة: " + error.message;
+      "❌ خطأ: " + error.message;
 
   } finally {
     if (worker) await worker.terminate();
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
     input.disabled = false;
     input.value = "";
   }
 }
+
 
 
 </script>
