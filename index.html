@@ -122,6 +122,17 @@
       const issue =
         document.getElementById("issue").value.trim();
 
+      const confirmed = await new Promise(resolve => {
+        tg.showConfirm(
+          "هل تؤكد أن الرقم التسلسلي صحيح؟\n\n" + serial,
+          resolve
+        );
+      });
+      
+      if (!confirmed) {
+        return;
+      }
+
       const status =
         document.getElementById("status");
 
