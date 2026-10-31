@@ -2,245 +2,312 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<title>CAD SAV</title>
 
-  <title>CAD SAV</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: var(--tg-theme-bg-color, #fff);
-      color: var(--tg-theme-text-color, #222);
-    }
+<style>
+  * { box-sizing: border-box; }
 
-    input, textarea, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      margin-top: 8px;
-      border-radius: 8px;
-      font-size: 15px;
-    }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 18px;
+    background: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #222);
+  }
 
-    button {
-      background: #2481cc;
-      color: white;
-      border: none;
-      margin-top: 20px;
-    }
-  </style>
+  .container {
+    max-width: 520px;
+    margin: auto;
+  }
+
+  h2 { margin-bottom: 5px; }
+
+  .version {
+    font-size: 12px;
+    opacity: .65;
+    margin-bottom: 22px;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 7px;
+  }
+
+  input, textarea, button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 9px;
+    font-family: inherit;
+  }
+
+  input, textarea {
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    color: var(--tg-theme-text-color, #222);
+    border: 1px solid #aaa;
+  }
+
+  textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  button {
+    border: none;
+    background: var(--tg-theme-button-color, #2481cc);
+    color: var(--tg-theme-button-text-color, #fff);
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  .secondary {
+    background: #e8edf3;
+    color: #223;
+  }
+
+  .panel {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+  }
+
+  .status {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+
+  #barcodeReader { width: 100%; }
+
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    direction: ltr;
+    text-align: left;
+  }
+</style>
 </head>
 
 <body>
-  <h2>🔧 CAD SAV</h2>
-  <p>استقبال جهاز للصيانة V1.01 </p>
+<div class="container">
 
-  <label>الرقم التسلسلي</label>
-  <input id="serial" placeholder="Serial Number">
-  
+  <h2>🔧 CAD SAV</h2>
+  <div class="version">Réception SAV — V1.02</div>
+
+  <label for="serial">الرقم التسلسلي — Serial Number</label>
+  <input
+    id="serial"
+    type="text"
+    maxlength="120"
+    dir="ltr"
+    autocomplete="off"
+    placeholder="Serial Number"
+  >
+
   <button type="button" onclick="scanQR()">
     📷 مسح QR Code
   </button>
-  
+
   <button type="button" onclick="scanBarcode()">
     📷 مسح Barcode
   </button>
 
-  <div id="barcodePanel" style="display:none; margin-top:12px;">
-  
-    <div id="barcodeReader" style="width:100%;"></div>
-  
-    <p id="barcodeStatus">
-      وجّه الكاميرا نحو الخطوط وانتظر القراءة.
-    </p>
-  
-    <label>أو اختر صورة واضحة للباركود:</label>
+  <!-- BARCODE -->
+  <div id="barcodePanel" class="panel" hidden>
+
+    <div id="barcodeReader"></div>
+
+    <p id="barcodeStatus" class="status"></p>
+
+    <label for="barcodeFile">أو اختر صورة للباركود</label>
+
     <input
       id="barcodeFile"
       type="file"
       accept="image/*"
       onchange="readBarcodeImage(this)"
     >
-  
-    <button type="button" onclick="stopBarcode()">
+
+    <button type="button"
+            class="secondary"
+            onclick="stopBarcode()">
       إغلاق الماسح
     </button>
-  
   </div>
-  
-  <div style="margin-top:15px;">
-    <label>قراءة الرقم التسلسلي المطبوع (OCR)</label>
-  
+
+  <!-- OCR -->
+  <div class="panel">
+
+    <label for="ocrFile">
+      قراءة الرقم المطبوع — OCR
+    </label>
+
     <input
+      id="ocrFile"
       type="file"
       accept="image/*"
       capture="environment"
       onchange="readSerialOCR(this)"
     >
-  
-    <p id="ocrStatus"></p>
-  
-    <details id="ocrDetails" style="display:none;">
-      <summary>عرض النص المستخرج من الصورة</summary>
-      <pre id="ocrText"
-           style="white-space:pre-wrap;overflow-wrap:anywhere;">
-      </pre>
+
+    <p id="ocrStatus" class="status"></p>
+
+    <details id="ocrDetails" hidden>
+      <summary>عرض النص المستخرج</summary>
+      <pre id="ocrText"></pre>
     </details>
+
   </div>
-  
-  <br><br>
 
-  <label>وصف العطل</label>
-  <textarea id="issue"
-            placeholder="Description de panne"></textarea>
+  <label for="issue">وصف العطل</label>
 
-  <button id="saveButton" onclick="saveSAV()">
+  <textarea
+    id="issue"
+    maxlength="1000"
+    placeholder="Description de panne"
+  ></textarea>
+
+  <button id="saveButton"
+          type="button"
+          onclick="saveSAV()">
     💾 حفظ في Google Sheets
   </button>
 
-  <p id="status"></p>
+  <button type="button"
+          class="secondary"
+          onclick="clearForm()">
+    🧹 تفريغ البطاقة
+  </button>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+  <p id="status" class="status"></p>
 
-    // ضع هنا رابط Apps Script المنتهي بـ /exec
-    const API_URL = "https://script.google.com/macros/s/AKfycbwjwfFZEjoFoFWq8_2UqucHkAKu1GGoC3JTClCLBJcHJBmPwRdD7eixObv_MkKKUQMh/exec";
+</div>
 
-    async function saveSAV() {
-      const serial =
-        document.getElementById("serial").value.trim();
+<script>
+"use strict";
 
-      const issue =
-        document.getElementById("issue").value.trim();
+/* ===============================
+   1. CONFIGURATION
+================================ */
 
-      const confirmed = await new Promise(resolve => {
-        tg.showConfirm(
-          "هل تؤكد أن الرقم التسلسلي صحيح؟\n\n" + serial,
-          resolve
-        );
-      });
-      
-      if (!confirmed) {
-        return;
-      }
+const APP_VERSION = "1.02";
 
-      const status =
-        document.getElementById("status");
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwjwfFZEjoFoFWq8_2UqucHkAKu1GGoC3JTClCLBJcHJBmPwRdD7eixObv_MkKKUQMh/exec";
 
-      const button =
-        document.getElementById("saveButton");
+const tg = window.Telegram?.WebApp;
 
-      if (!serial || !issue) {
-        tg.showAlert("يرجى إدخال الرقم والعطل");
-        return;
-      }
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
 
-      if (!tg.initData) {
-        tg.showAlert("افتح التطبيق من داخل Telegram");
-        return;
-      }
+const $ = id => document.getElementById(id);
 
-      button.disabled = true;
-      status.textContent = "⏳ جارٍ إرسال البيانات...";
-
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: {
-            "Content-Type": "text/plain"
-          },
-          body: JSON.stringify({
-            initData: tg.initData,
-            serial: serial,
-            issue: issue
-          })
-        });
-
-        status.textContent =
-          "📤 أُرسل الطلب. تحقق من Google Sheets للتأكد من الحفظ.";
-
-      } catch (error) {
-        status.textContent =
-          "❌ تعذر إرسال الطلب. تحقق من الاتصال.";
-      } finally {
-        button.disabled = false;
-      }
-    }
-  
-  function scanQR() {
-  
-    if (typeof tg.showScanQrPopup !== "function") {
-      tg.showAlert("ماسح QR غير متاح على هذا الجهاز");
-      return;
-    }
-  
-    tg.showScanQrPopup(
-      { text: "وجّه الكاميرا نحو QR Code" },
-      function(scannedText) {
-  
-        document.getElementById("serial").value =
-          scannedText;
-  
-        return true;
-      }
-    );
+function alertUser(message) {
+  if (tg?.showAlert && tg.initData) {
+    tg.showAlert(message);
+  } else {
+    window.alert(message);
   }
-    
-let barcodeControls = null;
-let barcodeStarting = false;
+}
 
+function setSerial(value) {
+  $("serial").value = String(value || "").trim();
+}
+
+/* ===============================
+   2. QR CODE
+================================ */
+
+function scanQR() {
+  if (!tg?.showScanQrPopup) {
+    alertUser("ماسح QR غير متاح");
+    return;
+  }
+
+  tg.showScanQrPopup(
+    { text: "وجّه الكاميرا نحو QR Code" },
+    scannedText => {
+
+      if (!scannedText) return false;
+
+      setSerial(scannedText);
+
+      tg.closeScanQrPopup?.();
+
+      return true;
+    }
+  );
+}
+
+/* ===============================
+   3. BARCODE
+================================ */
 
 let barcodeScanner = null;
 let barcodeBusy = false;
 let barcodeDetected = false;
 
-function barcodeStatus(text) {
-  document.getElementById("barcodeStatus").textContent = text;
+function barcodeStatus(message) {
+  $("barcodeStatus").textContent = message;
 }
 
 function getBarcodeScanner() {
-  if (!barcodeScanner) {
-    const F = Html5QrcodeSupportedFormats;
+  if (barcodeScanner) return barcodeScanner;
 
-    barcodeScanner = new Html5Qrcode(
-      "barcodeReader",
-      {
-        formatsToSupport: [
-          F.CODE_128,
-          F.CODE_39,
-          F.CODE_93,
-          F.EAN_13,
-          F.EAN_8,
-          F.UPC_A
-        ],
-        verbose: false
-      }
-    );
+  if (!window.Html5Qrcode) {
+    throw new Error("مكتبة Barcode غير متاحة");
   }
+
+  const F = Html5QrcodeSupportedFormats;
+
+  barcodeScanner = new Html5Qrcode(
+    "barcodeReader",
+    {
+      formatsToSupport: [
+        F.CODE_128,
+        F.CODE_39,
+        F.CODE_93,
+        F.EAN_13,
+        F.EAN_8,
+        F.UPC_A
+      ],
+      verbose: false
+    }
+  );
+
   return barcodeScanner;
 }
 
 async function scanBarcode() {
-  if (barcodeBusy) return;
+  if (barcodeBusy || barcodeScanner?.isScanning) return;
+
   barcodeBusy = true;
   barcodeDetected = false;
-
-  document.getElementById("barcodePanel").style.display = "block";
+  $("barcodePanel").hidden = false;
 
   try {
     const scanner = getBarcodeScanner();
 
-    barcodeStatus("جارٍ تشغيل الكاميرا...");
+    barcodeStatus("⏳ جارٍ تشغيل الكاميرا...");
 
     await scanner.start(
       { facingMode: "environment" },
@@ -252,8 +319,9 @@ async function scanBarcode() {
         }),
         aspectRatio: 1.7778
       },
-      async (decodedText) => {
-        if (barcodeDetected) return;
+      async decodedText => {
+        if (barcodeDetected || !decodedText) return;
+
         barcodeDetected = true;
         await barcodeSuccess(decodedText);
       },
@@ -261,56 +329,64 @@ async function scanBarcode() {
     );
 
     if (!barcodeDetected) {
-      barcodeStatus("قرّب الباركود حتى تظهر الخطوط واضحة داخل الإطار.");
+      barcodeStatus(
+        "وجّه الكاميرا نحو الخطوط وانتظر القراءة."
+      );
     }
 
   } catch (error) {
-    barcodeStatus("تعذر تشغيل الكاميرا: " + error.message);
+    barcodeStatus("❌ " + error.message);
   } finally {
     barcodeBusy = false;
   }
 }
 
 async function barcodeSuccess(value) {
-  document.getElementById("serial").value = value;
+  setSerial(value);
 
   await stopBarcode();
 
-  tg.showAlert("تمت القراءة: " + value);
+  alertUser("✅ تمت القراءة:\n" + value);
 }
 
 async function stopBarcode() {
   const scanner = barcodeScanner;
+
+  barcodeScanner = null;
 
   if (scanner) {
     try {
       if (scanner.isScanning) {
         await scanner.stop();
       }
+
       scanner.clear();
+
     } catch (error) {
-      console.warn(error);
+      console.warn("Barcode cleanup:", error);
     }
   }
 
-  barcodeScanner = null;
   barcodeBusy = false;
-
-  document.getElementById("barcodePanel").style.display = "none";
+  $("barcodePanel").hidden = true;
 }
 
 async function readBarcodeImage(input) {
   const file = input.files?.[0];
-  if (!file) return;
+
+  if (!file || barcodeBusy) return;
+
+  barcodeBusy = true;
+  $("barcodePanel").hidden = false;
 
   try {
-    barcodeStatus("جارٍ تحليل الصورة...");
-
     const scanner = getBarcodeScanner();
 
     if (scanner.isScanning) {
       await scanner.stop();
     }
+
+    barcodeStatus("⏳ جارٍ تحليل الصورة...");
 
     const value = await scanner.scanFile(file, false);
 
@@ -318,31 +394,43 @@ async function readBarcodeImage(input) {
 
   } catch (error) {
     barcodeStatus(
-      "لم يتم التعرف على الباركود. جرب صورة أوضح."
+      "⚠️ لم يتم التعرف على Barcode. جرّب صورة أوضح."
     );
   } finally {
+    barcodeBusy = false;
     input.value = "";
   }
 }
 
+/* ===============================
+   4. OCR
+================================ */
+
+let ocrBusy = false;
 
 async function readSerialOCR(input) {
   const file = input.files?.[0];
-  if (!file) return;
 
-  const status = document.getElementById("ocrStatus");
-  const details = document.getElementById("ocrDetails");
-  const output = document.getElementById("ocrText");
+  if (!file || ocrBusy) return;
 
-  let worker = null;
+  ocrBusy = true;
   input.disabled = true;
 
-  status.textContent = "⏳ جارٍ تحليل الصورة الأصلية...";
-  details.style.display = "block";
-  output.textContent = "انتظار نتيجة OCR...";
+  let worker = null;
+
+  const status = $("ocrStatus");
+  const output = $("ocrText");
+
+  $("ocrDetails").hidden = false;
+
+  status.textContent = "⏳ جارٍ قراءة الصورة...";
+  output.textContent = "";
 
   try {
-    // قراءة الصورة الأصلية كاملة دون اقتصاص
+    if (!window.Tesseract) {
+      throw new Error("مكتبة OCR غير متاحة");
+    }
+
     worker = await Tesseract.createWorker("eng");
 
     await worker.setParameters({
@@ -350,34 +438,141 @@ async function readSerialOCR(input) {
     });
 
     const result = await worker.recognize(file);
+
     const text = result.data.text || "";
 
-    output.textContent = text || "لم يُتعرف على أي حرف";
+    output.textContent =
+      text.trim() || "لم يتم استخراج أي نص";
 
-    // اقتراح الرقم فقط إذا ظهر S/N بوضوح
+    // استخراج رقم محتمل بعد S/N أو Serial Number
     const match = text.match(
-      /(?:S\s*\/\s*N|Serial\s*(?:No|Number)?)\s*[:\-]?\s*([A-Z0-9-]{8,})/i
+      /(?:S\s*\/\s*N|Serial\s*(?:No\.?|Number)?)\s*[:\-]?\s*([A-Z0-9-]{8,})/i
     );
 
     if (match) {
-      document.getElementById("serial").value =
-        match[1].trim();
+      setSerial(match[1]);
 
       status.textContent =
-        "✅ تم العثور على رقم محتمل. تحقق منه قبل الحفظ.";
+        "🔎 تم العثور على رقم محتمل. تحقق منه قبل الحفظ.";
+
     } else {
       status.textContent =
-        "اكتملت القراءة. راجع النص المستخرج أدناه.";
+        "اكتملت القراءة. راجع النص المستخرج وأدخل الرقم الصحيح.";
     }
 
   } catch (error) {
-    status.textContent = "❌ " + error.message;
+    status.textContent =
+      "❌ فشلت القراءة: " + error.message;
+
   } finally {
-    if (worker) await worker.terminate();
+    if (worker) {
+      try {
+        await worker.terminate();
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
     input.disabled = false;
     input.value = "";
+    ocrBusy = false;
   }
 }
+
+/* ===============================
+   5. SAVE TO GOOGLE SHEETS
+================================ */
+
+let saving = false;
+
+async function saveSAV() {
+  if (saving) return;
+
+  const serial = $("serial").value.trim();
+  const issue = $("issue").value.trim();
+
+  // التحقق من الحقول أولًا
+  if (!serial || !issue) {
+    alertUser("يرجى إدخال الرقم التسلسلي ووصف العطل");
+    return;
+  }
+
+  if (!tg?.initData) {
+    alertUser("يجب فتح التطبيق من داخل Telegram");
+    return;
+  }
+
+  // تأكيد الرقم قبل الحفظ
+  const confirmed = await new Promise(resolve => {
+    tg.showConfirm(
+      "هل تؤكد صحة الرقم التسلسلي؟\n\n" + serial,
+      resolve
+    );
+  });
+
+  if (!confirmed || saving) return;
+
+  saving = true;
+  $("saveButton").disabled = true;
+
+  $("status").textContent =
+    "⏳ جارٍ إرسال البيانات...";
+
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify({
+        initData: tg.initData,
+        serial: serial,
+        issue: issue
+      })
+    });
+
+    // no-cors لا يسمح بقراءة نتيجة الخادم
+    $("status").textContent =
+      "📤 تم إرسال الطلب. تحقق من Google Sheets قبل إعادة الإرسال.";
+
+  } catch (error) {
+    $("status").textContent =
+      "❌ تعذر إرسال الطلب. تحقق من الاتصال.";
+
+  } finally {
+    saving = false;
+    $("saveButton").disabled = false;
+  }
+}
+
+/* ===============================
+   6. RESET
+================================ */
+
+async function clearForm() {
+  if (saving) return;
+
+  const confirmed = await new Promise(resolve => {
+    if (tg?.showConfirm) {
+      tg.showConfirm("هل تريد تفريغ البطاقة؟", resolve);
+    } else {
+      resolve(window.confirm("هل تريد تفريغ البطاقة؟"));
+    }
+  });
+
+  if (!confirmed) return;
+
+  await stopBarcode();
+
+  $("serial").value = "";
+  $("issue").value = "";
+  $("status").textContent = "";
+  $("ocrStatus").textContent = "";
+  $("ocrText").textContent = "";
+  $("ocrDetails").hidden = true;
+}
+
 </script>
 </body>
 </html>
