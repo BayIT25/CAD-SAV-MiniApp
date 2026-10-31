@@ -42,6 +42,11 @@
 
   <label>الرقم التسلسلي</label>
   <input id="serial" placeholder="Serial Number">
+  
+  <button type="button" onclick="scanQR()">
+    📷 مسح QR Code
+  </button>
+
 
   <br><br>
 
@@ -113,6 +118,25 @@
         button.disabled = false;
       }
     }
+  
+  function scanQR() {
+  
+    if (typeof tg.showScanQrPopup !== "function") {
+      tg.showAlert("ماسح QR غير متاح على هذا الجهاز");
+      return;
+    }
+  
+    tg.showScanQrPopup(
+      { text: "وجّه الكاميرا نحو QR Code" },
+      function(scannedText) {
+  
+        document.getElementById("serial").value =
+          scannedText;
+  
+        return true;
+      }
+    );
+  }
   </script>
 </body>
 </html>
