@@ -53,18 +53,27 @@
     📷 مسح Barcode
   </button>
 
+
   <div id="barcodePanel" style="display:none; margin-top:12px;">
+  
     <video id="barcodeVideo"
            autoplay playsinline muted
            style="width:100%; border-radius:10px;">
     </video>
   
-    <button type="button" onclick="stopBarcode()">
-      إيقاف الكاميرا
+    <p id="barcodeStatus">
+      وجّه الكاميرا إلى Barcode وانتظر القراءة التلقائية.
+    </p>
+  
+    <button type="button" onclick="captureBarcode()">
+      📸 التقاط وتحليل الصورة
     </button>
+  
+    <button type="button" onclick="stopBarcode()">
+      إلغاء المسح
+    </button>
+  
   </div>
-
-
 
   <br><br>
 
@@ -215,6 +224,47 @@ function stopBarcode() {
   document.getElementById("barcodePanel").style.display =
     "none";
 }
+
+async function captureBarcode() {
+  const video = document.getElementById("barcodeVideo");
+  const status = document.getElementById("barcodeStatus");
+
+  if (!video.videoWidth || !video.videoHeight) {
+    status.textContent = "الكاميرا غير جاهزة بعد";
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(video, 0, 0);
+
+  status.textContent = "⏳ جارٍ تحليل الصورة...";
+
+  try {
+    const reader =
+      new ZXingBrowser.BrowserMultiFormatOneDReader();
+
+    const result = await reader.decodeFromImageUrl(
+      canvas.toDataURL("image/png")
+    );
+
+    const serial = result.getText();
+
+    document.getElementById("serial").value = serial;
+
+    stopBarcode();
+
+    tg.showAlert("✅ تمت قراءة الرقم: " + serial);
+
+  } catch (error) {
+    status.textContent =
+      "لم يُكتشف Barcode. قرّب الكاميرا أو حسّن الإضاءة.";
+  }
+}
+
 </script>
 </body>
 </html>
