@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <title>CAD SAV</title>
+</head>
+
+<body style="font-family:Arial; padding:20px;">
+
+  <h2>🔧 CAD SAV</h2>
+  <p>أول تجربة Telegram Mini App</p>
+
+  <label>الرقم التسلسلي للجهاز</label>
+  <input type="text" placeholder="Serial Number"
+         style="width:100%;padding:12px;box-sizing:border-box;">
+
+  <br><br>
+
+  <button onclick="Telegram.WebApp.showAlert('Mini App تعمل بنجاح!')"
+          style="width:100%;padding:14px;">
+    اختبار التطبيق
+  </button>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  </script>
+
+</body>
+</html>
