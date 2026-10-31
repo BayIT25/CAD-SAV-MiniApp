@@ -8,6 +8,7 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <title>CAD SAV</title>
 
@@ -73,7 +74,27 @@
     </button>
   
   </div>
-
+  
+  <div style="margin-top:15px;">
+    <label>قراءة الرقم التسلسلي المطبوع (OCR)</label>
+  
+    <input
+      type="file"
+      accept="image/*"
+      capture="environment"
+      onchange="readSerialOCR(this)"
+    >
+  
+    <p id="ocrStatus"></p>
+  
+    <details id="ocrDetails" style="display:none;">
+      <summary>عرض النص المستخرج من الصورة</summary>
+      <pre id="ocrText"
+           style="white-space:pre-wrap;overflow-wrap:anywhere;">
+      </pre>
+    </details>
+  </div>
+  
   <br><br>
 
   <label>وصف العطل</label>
@@ -289,6 +310,59 @@ async function readBarcodeImage(input) {
       "لم يتم التعرف على الباركود. جرب صورة أوضح."
     );
   } finally {
+    input.value = "";
+  }
+}
+
+async function readSerialOCR(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const status = document.getElementById("ocrStatus");
+  const details = document.getElementById("ocrDetails");
+  const output = document.getElementById("ocrText");
+
+  let worker = null;
+  input.disabled = true;
+  details.style.display = "none";
+  status.textContent = "⏳ جارٍ قراءة الصورة...";
+
+  try {
+    worker = await Tesseract.createWorker("eng");
+
+    const result = await worker.recognize(file);
+    const text = result.data.text || "";
+
+    output.textContent = text;
+    details.style.display = "block";
+
+    // نبحث عن S/N أو Serial Number
+    const match = text.match(
+      /(?:S\s*\/\s*N|S\.?N\.?|Serial\s*(?:No\.?|Number)?)\s*[:：-]?\s*([A-Z0-9][A-Z0-9-]{5,})/i
+    );
+
+    if (match) {
+      const serial = match[1].trim();
+
+      document.getElementById("serial").value = serial;
+
+      status.textContent =
+        "✅ الرقم المحتمل: " + serial +
+        " — يرجى مقارنته بالملصق قبل الحفظ.";
+
+    } else {
+      status.textContent =
+        "⚠️ لم أتعرف على S/N تلقائيًا. " +
+        "راجع النص المستخرج واكتب الرقم الصحيح.";
+    }
+
+  } catch (error) {
+    status.textContent =
+      "❌ فشلت قراءة الصورة: " + error.message;
+
+  } finally {
+    if (worker) await worker.terminate();
+    input.disabled = false;
     input.value = "";
   }
 }
