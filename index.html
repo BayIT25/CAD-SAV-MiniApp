@@ -35,6 +35,24 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 
 .field-case-meta{border:1px solid #d5e3ec;border-radius:9px;padding:11px 13px;margin:9px 0 13px;background:var(--tg-theme-secondary-bg-color,#f5f8fb);display:flex;flex-direction:column;gap:5px}
 .field-case-meta[hidden]{display:none!important}.field-case-meta strong{font-size:15px}.field-case-meta small{font-size:12px}
+
+/* V1.12.6 — responsive desktop; small-screen layout remains unchanged. */
+@media (min-width: 760px){
+  main#appMain,.modal-inner{max-width:1000px;width:min(100%,1000px)}
+  body{padding-inline:clamp(16px,3vw,40px)}
+  .home-screen{max-width:760px;margin-inline:auto}
+  #fieldDirectory>.panel,#serviceScreen{width:100%}
+  #serviceScreen .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
+  .field-table{min-width:0;font-size:14px}
+  .field-table th,.field-table td{padding:12px 14px}
+  .field-filter-grid{max-width:520px}
+  #caseModal .detail-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .modal{padding-inline:clamp(18px,3vw,48px)}
+}
+@media (hover:hover) and (pointer:fine){
+  #fieldRows tr[data-case-id]{cursor:pointer;transition:background-color .15s ease}
+  #fieldRows tr[data-case-id]:hover,#fieldRows tr[data-case-id]:focus-visible{background:var(--tg-theme-secondary-bg-color,#edf4fa);outline:1px solid var(--cad-border)}
+}
 </style>
 </head>
 <body>
@@ -142,7 +160,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.12.5';
+const APP_VERSION='V1.12.6';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -207,8 +225,22 @@ function renderFieldDirectory(){
  const tbody=$('fieldRows');tbody.replaceChildren();
  for(const item of rows){
   const tr=document.createElement('tr');
+  tr.dataset.caseId=item.caseId;
+  tr.tabIndex=0;tr.title='انقر مرتين لفتح الاستمارة على الحاسوب، أو المس الصف على الهاتف';
+  tr.setAttribute('aria-label','استمارة التدخل '+item.caseId);
+  const openRow=()=>openFieldEdit(item.caseId);
+  tr.addEventListener('dblclick',e=>{if(e.target.closest('button'))return;openRow();});
+  tr.addEventListener('click',e=>{if(e.target.closest('button'))return;
+    if(window.matchMedia('(pointer:coarse)').matches)openRow();
+  });
+  tr.addEventListener('keydown',e=>{if(e.target!==tr)return;
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();openRow();}
+  });
   for(const value of [item.caseId,item.requestDate||item.createdAt?.slice(0,10)||'—',item.technician||'غير معين',item.status]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
-  const td=document.createElement('td');const btn=document.createElement('button');btn.type='button';btn.className='icon-action';btn.title='فتح استمارة التدخل';btn.setAttribute('aria-label','فتح استمارة التدخل '+item.caseId);btn.textContent='📝';btn.onclick=()=>openFieldEdit(item.caseId);td.append(btn);tr.append(td);tbody.append(tr);
+  const td=document.createElement('td');const btn=document.createElement('button');btn.type='button';btn.className='icon-action';btn.title='فتح استمارة التدخل';btn.setAttribute('aria-label','فتح استمارة التدخل '+item.caseId);btn.textContent='📝';
+  btn.addEventListener('click',e=>{e.stopPropagation();openRow();});
+  btn.addEventListener('dblclick',e=>e.stopPropagation());
+  td.append(btn);tr.append(td);tbody.append(tr);
  }
  $('fieldDirectoryStatus').textContent=`النتائج: ${rows.length} من ${fieldData.length}`;
  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='لا توجد تدخلات مطابقة.';tr.append(td);tbody.append(tr);}
