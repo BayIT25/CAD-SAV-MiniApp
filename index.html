@@ -36,7 +36,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 .field-case-meta{border:1px solid #d5e3ec;border-radius:9px;padding:11px 13px;margin:9px 0 13px;background:var(--tg-theme-secondary-bg-color,#f5f8fb);display:flex;flex-direction:column;gap:5px}
 .field-case-meta[hidden]{display:none!important}.field-case-meta strong{font-size:15px}.field-case-meta small{font-size:12px}
 
-/* V1.12.6 — responsive desktop; small-screen layout remains unchanged. */
+/* V1.12.7 — responsive desktop; small-screen layout remains unchanged. */
 @media (min-width: 760px){
   main#appMain,.modal-inner{max-width:1000px;width:min(100%,1000px)}
   body{padding-inline:clamp(16px,3vw,40px)}
@@ -53,6 +53,12 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
   #fieldRows tr[data-case-id]{cursor:pointer;transition:background-color .15s ease}
   #fieldRows tr[data-case-id]:hover,#fieldRows tr[data-case-id]:focus-visible{background:var(--tg-theme-secondary-bg-color,#edf4fa);outline:1px solid var(--cad-border)}
 }
+
+.field-case-meta{text-align:right;direction:rtl}
+#fieldCaseId{display:block;direction:rtl;text-align:right;unicode-bidi:plaintext}
+.field-meta-dates{display:flex;flex-wrap:wrap;gap:5px 18px;margin-top:6px;justify-content:flex-start}
+#fieldStatusBox{margin-top:14px}
+@media(min-width:760px){.field-meta-dates{gap:24px}}
 </style>
 </head>
 <body>
@@ -84,7 +90,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
  </div>
 </section>
 <section id="serviceScreen" hidden><div class="page-heading"><button type="button" class="secondary back-small" onclick="backHome()">← العودة</button><div><h2 id="serviceHeading">🔧 إصلاح أجهزة</h2><span class="hint" id="serviceCaption">بحث واستقبال الأجهزة</span></div></div>
-<div class="version">CAD SAV · <span data-app-version></span></div><div id="fieldCaseMeta" class="field-case-meta" hidden><strong id="fieldCaseId" dir="ltr"></strong><small id="fieldLastUpdate" class="hint"></small></div>
+<div class="version">CAD SAV · <span data-app-version></span></div><div id="fieldCaseMeta" class="field-case-meta" hidden><strong id="fieldCaseId" dir="rtl"></strong><div class="field-meta-dates"><small id="fieldCreatedAt" class="hint"></small><small id="fieldLastUpdate" class="hint"></small></div></div>
 <label for="serviceMode" hidden>نوع طلب الصيانة</label><select id="serviceMode" hidden onchange="serviceModeChanged()"><option value="IN_SHOP">جهاز مستلَم لدى CAD</option><option value="FIELD">تدخل لدى الزبون</option></select>
 <div id="receptionLocationBox" hidden><label for="receptionLocation">فرع استقبال الطلب</label><select id="receptionLocation"></select></div>
 <div id="fieldDatesBox" hidden><div class="grid"><div><label for="requestDate">تاريخ الطلب</label><input type="date" id="requestDate"></div><div><label for="interventionDate">تاريخ التدخل (اختياري)</label><input type="date" id="interventionDate"></div></div><p class="hint">تاريخ إنشاء البطاقة يُسجّل آليًا عند الحفظ.</p></div>
@@ -95,6 +101,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 <div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button><div id="newDeviceHint" hidden><p class="hint">جهاز جديد: يجب إنشاء ملف صيانة أولًا قبل فتح بطاقته.</p><button type="button" class="secondary" onclick="createNewDeviceCard()">➕ إنشاء بطاقة لهذا الجهاز</button></div></div>
 <div class="grid"><div><label for="product">نوع الجهاز</label><input id="product" maxlength="120" placeholder="Produit"></div><div><label for="brand">العلامة</label><input id="brand" maxlength="120" placeholder="Marque"></div></div>
 <label for="model">الموديل</label><input id="model" maxlength="120" dir="ltr" placeholder="Modèle">
+<section id="fieldStatusBox" hidden><label for="fieldStatus">الحالة</label><select id="fieldStatus"><option value="جديد">جديد</option><option value="قيد التنفيذ">قيد التنفيذ</option><option value="في انتظار قطعة">في انتظار قطعة</option><option value="قيد المعالجة">قيد المعالجة</option><option value="جاهز">جاهز</option><option value="مغلق">مغلق</option></select><p class="hint">تنعكس الحالة مباشرة في قائمة التدخلات وفلتر الحالة.</p></section>
 <section id="fieldAssignBox" class="panel" hidden><label for="fieldAssignTechnician">👨‍🔧 إحالة إلى تقني</label><select id="fieldAssignTechnician"><option value="">— دون إحالة —</option></select><p class="hint">تظهر أسماء التقنيين المفعلين فقط. تغيير الاختيار يُحفظ عند الضغط على «حفظ التعديل».</p></section>
 <button id="saveButton" type="button" onclick="saveSAV()">💾 تسجيل الاستقبال</button>
 
@@ -160,7 +167,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.12.6';
+const APP_VERSION='V1.12.7';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -199,7 +206,7 @@ function clearFieldDraft(){
  serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';lastSavedId='';
  for(const id of ['customer','phone','product','brand','model','issue','customerAddress','requestDate','interventionDate'])$(id).value='';
  $('lookupBox').hidden=true;$('status').textContent='';$('labelButton').hidden=true;$('saveButton').disabled=false;
- $('openCaseButton').hidden=true;$('requestDate').value=localToday();displaySerial();$('fieldCaseMeta').hidden=true;$('fieldAssignBox').hidden=true;$('fieldAssignTechnician').replaceChildren(new Option('— دون إحالة —',''));$('saveButton').textContent='💾 حفظ طلب التدخل';
+ $('openCaseButton').hidden=true;$('requestDate').value=localToday();displaySerial();$('fieldCaseMeta').hidden=true;$('fieldStatusBox').hidden=true;$('fieldStatus').value='جديد';$('fieldAssignBox').hidden=true;for(const id of ['requestDate','interventionDate','customer','phone','customerAddress','issue','product','brand','model'])$(id).disabled=false;$('serialTrigger').disabled=false;$('fieldAssignTechnician').replaceChildren(new Option('— دون إحالة —',''));$('saveButton').textContent='💾 حفظ طلب التدخل';
 }
 function localToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Algiers',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}
 async function loadFieldDirectory(){
@@ -443,6 +450,7 @@ async function saveAssignment(){
 }
 
 let fieldAssignmentId='',fieldAssignmentChanged=false,fieldTechniciansLoaded=false;
+function formatDateTime(value){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):new Intl.DateTimeFormat('ar-DZ',{timeZone:'Africa/Algiers',dateStyle:'medium',timeStyle:'short'}).format(d);}
 function showLastEdit(value){
  if(!value)return 'آخر تعديل: —';
  const date=new Date(value);
@@ -472,7 +480,7 @@ async function openFieldEdit(caseId){
   const data=await apiCall('/api/case-detail',{caseId}),r=data.case;
   if(r.Service_Mode!=='FIELD')throw Error('FIELD_ONLY');
   editingFieldCaseId=caseId;editingFieldUpdatedAt=r.Updated_At||'';
-  $('fieldCaseMeta').hidden=false;$('fieldCaseId').textContent='رقم التدخل: '+caseId;$('fieldLastUpdate').textContent=showLastEdit(r.Updated_At||r.Created_At);
+  $('fieldCaseMeta').hidden=false;$('fieldCaseId').textContent='رقم التدخل: '+caseId;$('fieldCreatedAt').textContent='تاريخ الإنشاء: '+formatDateTime(r.Created_At);$('fieldLastUpdate').textContent=showLastEdit(r.Updated_At||r.Created_At);$('fieldStatusBox').hidden=false;$('fieldStatus').value=r.Status||'جديد';
   $('fieldAssignBox').hidden=appMe?.role!=='SAV_MANAGER'||r.Status==='مغلق';
   if(appMe?.role==='SAV_MANAGER'&&r.Status!=='مغلق'){try{await loadFieldTechnicians();fieldAssignmentId=String(fieldData.find(x=>x.caseId===caseId)?.technicianId||'');$('fieldAssignTechnician').value=fieldAssignmentId;}catch(techError){$('fieldAssignBox').hidden=true;console.warn('Technician list:',techError.message);}}
 
@@ -481,12 +489,18 @@ async function openFieldEdit(caseId){
   $('customerAddress').value=r.Customer_Address||'';$('issue').value=r.Issue_Description||'';
   $('product').value=r.Product||'';$('brand').value=r.Brand||'';$('model').value=r.Model||'';
   serialValue=r.Serial_Number?.startsWith('FIELD-')?'':(r.Serial_Number||'');displaySerial();
-  const editable=(appMe?.role==='SAV_MANAGER'||String(fieldData.find(x=>x.caseId===caseId)?.createdBy||'')===String(appMe?.userId||''))&&r.Status!=='مغلق';
-  for(const id of ['requestDate','interventionDate','customer','phone','customerAddress','issue','product','brand','model'])$(id).disabled=!editable;
-  $('serialTrigger').disabled=!editable;
-  $('saveButton').hidden=!editable;$('saveButton').disabled=false;
+  const editLevel=data.permissions?.fieldEditLevel||'NONE';
+  const allowed=editLevel!=='NONE';
+  const limited=editLevel==='TECH';
+  const allowedFields=limited?new Set(['issue','interventionDate']):new Set(['requestDate','interventionDate','customer','phone','customerAddress','issue','product','brand','model']);
+  for(const id of ['requestDate','interventionDate','customer','phone','customerAddress','issue','product','brand','model'])$(id).disabled=!allowedFields.has(id)||!allowed;
+  $('serialTrigger').disabled=limited||!allowed;
+  $('fieldStatus').disabled=!allowed;
+  if(limited)$('fieldStatus').querySelector('option[value="مغلق"]').disabled=true;
+  else $('fieldStatus').querySelector('option[value="مغلق"]').disabled=false;
+  $('saveButton').hidden=!allowed;$('saveButton').disabled=false;
   $('saveButton').textContent='💾 حفظ التعديل';
-  $('status').textContent=editable?'':'عرض فقط — لا تملك صلاحية تعديل هذا الطلب.';
+  $('status').textContent=allowed?(limited?'يسمح لك بتعديل وصف العطل، موعد التدخل والحالة فقط.':''):'عرض فقط — الطلب ظاهر لك، لكن التعديل مخصص للتقني المحال إليه أو مسؤول المصلحة.';
  }catch(e){$('status').textContent='❌ تعذر فتح الاستمارة: '+e.message;}
 }
 async function saveFieldEdit(){
@@ -497,7 +511,7 @@ async function saveFieldEdit(){
  try{
   const payload={caseId:editingFieldCaseId,expectedUpdatedAt:editingFieldUpdatedAt,
    customer:$('customer').value.trim(),phone:$('phone').value.trim(),customerAddress:$('customerAddress').value.trim(),issue:$('issue').value.trim(),
-   requestDate:$('requestDate').value,interventionDate:$('interventionDate').value,
+   requestDate:$('requestDate').value,interventionDate:$('interventionDate').value,status:$('fieldStatus').value,
    serial:serialValue,product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()};
   const result=await apiCall('/api/field-update',payload);editingFieldUpdatedAt=result.updatedAt||editingFieldUpdatedAt;
   $('fieldLastUpdate').textContent=showLastEdit(editingFieldUpdatedAt);
