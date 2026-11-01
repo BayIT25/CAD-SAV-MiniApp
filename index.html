@@ -20,7 +20,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </head>
 <body>
 <main>
-<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.06</div>
+<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.06.1</div>
 <label for="serialTrigger">الرقم التسلسلي</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
 <div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button></div>
 <div class="grid"><div><label for="customer">العميل</label><input id="customer" maxlength="120" placeholder="Nom du client"></div><div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" maxlength="50" dir="ltr" placeholder="Téléphone"></div></div>
@@ -66,6 +66,7 @@ const API='https://cad-sav-api-176972661374.europe-west1.run.app';
 const $=id=>document.getElementById(id), tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand()}
 let serialValue='', saving=false, lookupVersion=0, lookupResult=null, activeCaseId='', caseDetailData=null, caseTab='interventions';
+let lastSavedId = ''; // رقم الملف الذي نجح حفظه؛ يستخدم لعرض ملصق QR
 let requestId=crypto.randomUUID(), barcodeScanner=null,barcodeBusy=false,barcodeDetected=false, cameraStarting=false,ocrBusy=false;
 function message(text){if(tg?.showAlert && tg.initData)tg.showAlert(text);else alert(text)}
 function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.initData)tg.showConfirm(text,done);else done(confirm(text))})}
@@ -195,3 +196,4 @@ displaySerial();
 </section>
 </body>
 </html>
+
