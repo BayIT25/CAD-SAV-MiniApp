@@ -7,14 +7,20 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:16px;font:15px Arial,sans-serif;background:var(--tg-theme-bg-color,#fff);color:var(--tg-theme-text-color,#222)}
 main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-size:12px;opacity:.65;margin-bottom:18px}label{display:block;font-weight:600;margin:14px 0 7px}input,textarea,button{font:inherit;width:100%;padding:12px;border-radius:9px}input,textarea{border:1px solid #aaa;background:var(--tg-theme-secondary-bg-color,#f7f7f7);color:var(--tg-theme-text-color,#222)}textarea{resize:vertical;min-height:92px}button{border:0;margin-top:10px;cursor:pointer;background:var(--tg-theme-button-color,#2481cc);color:var(--tg-theme-button-text-color,#fff);font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:var(--tg-theme-secondary-bg-color,#e9edf3);color:var(--tg-theme-text-color,#222);border:1px solid #aaa}.serial-trigger{text-align:start;direction:ltr;font-weight:400;background:var(--tg-theme-secondary-bg-color,#f7f7f7);border:1px solid #aaa;color:var(--tg-theme-hint-color,#666)}.serial-trigger.has-value{color:var(--tg-theme-text-color,#222)}.status{font-size:13px;line-height:1.6;overflow-wrap:anywhere}[hidden]{display:none!important}.modal{position:fixed;inset:0;z-index:100;background:var(--tg-theme-bg-color,#fff);overflow-y:auto;padding:16px 16px calc(22px + env(safe-area-inset-bottom))}.modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.modal-top h3{margin:0}.modal-top button{width:auto;margin:0}.methods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 6px}.methods button{margin:0;padding:12px 5px;font-size:13px}.panel{padding:12px;margin-top:12px;border:1px solid #aaa;border-radius:10px}#barcodeReader{width:100%}#ocrText{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left}.hint{color:var(--tg-theme-hint-color,#666);font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.result{border:1px solid #bbb;border-radius:9px;padding:11px;margin-top:12px}.result b{display:block;margin-bottom:5px}.success{border-color:#1d9b60}.warning{border-color:#d39516}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.detail-field{border:1px solid #bbb;border-radius:8px;padding:9px;overflow-wrap:anywhere}.detail-field small{display:block;color:var(--tg-theme-hint-color,#666);margin-bottom:5px}.detail-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.detail-tabs button{font-size:12px;padding:11px 4px;margin:0}.event{border-bottom:1px solid #bbb;padding:10px 0}.event:last-child{border-bottom:0}.event small{display:block;color:var(--tg-theme-hint-color,#666);margin-top:4px}
+.label-preview{background:white;color:#111;padding:1mm;width:50mm;height:30mm;margin:12px auto;border:1px solid #ddd;text-align:center;direction:ltr;display:grid;grid-template-columns:25mm 23mm;grid-template-rows:12mm 15mm;column-gap:0;align-items:center;justify-items:center;overflow:hidden}
+.label-preview strong{font-size:7pt;font-family:Arial,sans-serif;overflow-wrap:anywhere;grid-column:2;grid-row:2}
+.label-preview small{font-size:9pt;font-weight:bold;grid-column:2;grid-row:1}
+#labelQr{grid-column:1;grid-row:1 / 3} #labelQr canvas,#labelQr img{display:block;margin:auto;width:23mm!important;height:23mm!important}
+@media print { body *{visibility:hidden!important} #printLabel,#printLabel *{visibility:visible!important}#printLabel{position:fixed;left:0;top:0;margin:0;border:0} @page {size:50mm 30mm;margin:0} }
 </style>
 </head>
 <body>
 <main>
-<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.05</div>
+<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.06</div>
 <label for="serialTrigger">الرقم التسلسلي</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
 <div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button></div>
 <div class="grid"><div><label for="customer">العميل</label><input id="customer" maxlength="120" placeholder="Nom du client"></div><div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" maxlength="50" dir="ltr" placeholder="Téléphone"></div></div>
@@ -24,6 +30,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 <button id="saveButton" type="button" onclick="saveSAV()">💾 تسجيل الاستقبال</button>
 <button type="button" class="secondary" onclick="clearForm()">🧹 تفريغ البطاقة</button>
 <p id="status" class="status" role="status"></p>
+<button id="labelButton" type="button" onclick="showLabel()" hidden>🏷️ عرض ملصق QR للملف</button>
 </main>
 <section id="serialModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="serialHeading" hidden><div class="modal-inner">
 <div class="modal-top"><h3 id="serialHeading">الرقم التسلسلي</h3><button class="secondary" type="button" onclick="closeSerialModal()">✕ إغلاق</button></div>
@@ -39,6 +46,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
   <div class="modal-top"><h3 id="caseHeading">📂 بطاقة الصيانة</h3><button class="secondary" type="button" onclick="closeCaseDetail()">✕ رجوع</button></div>
   <p class="hint" id="caseSubtitle">جاري تحميل البيانات...</p>
   <div id="caseLoading" class="status" role="status"></div>
+  <button id="caseLabelButton" type="button" onclick="showLabel(activeCaseId)" hidden>🏷️ ملصق QR لهذا الملف</button>
   <div id="caseContent" hidden>
    <div class="result"><b id="caseNumber" dir="ltr"></b><div id="caseState"></div></div>
    <div class="detail-grid" id="caseFields"></div>
@@ -64,8 +72,9 @@ function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.
 function displaySerial(){$('serialTrigger').textContent=serialValue||'اضغط لإدخال الرقم أو مسحه...';$('serialTrigger').classList.toggle('has-value',!!serialValue)}
 function openSerialModal(){$('serialDraft').value=serialValue;$('serialModal').hidden=false;document.body.style.overflow='hidden'}
 async function closeSerialModal(){if(ocrBusy||cameraStarting){message('انتظر اكتمال القراءة');return}await stopBarcode();$('serialModal').hidden=true;$('ocrPanel').hidden=true;document.body.style.overflow=''}
-async function applySerial(){if(ocrBusy||cameraStarting||barcodeBusy){message('انتظر اكتمال القراءة');return}const value=$('serialDraft').value.trim();if(!value){message('أدخل الرقم التسلسلي');return}const changed=serialValue!==value;serialValue=value;displaySerial();await closeSerialModal();if(changed){requestId=crypto.randomUUID();await lookupSerial()}}
-function scanQR(){if(!tg?.showScanQrPopup){message('ماسح QR غير متاح');return}tg.showScanQrPopup({text:'وجّه الكاميرا نحو QR Code'},value=>{if(!value)return false;$('serialDraft').value=value;tg.closeScanQrPopup?.();return true})}
+async function applySerial(){if(ocrBusy||cameraStarting||barcodeBusy){message('انتظر اكتمال القراءة');return}const value=$('serialDraft').value.trim();if(isSavId(value)){activeCaseId=value;await closeSerialModal();await openCaseDetail();return}if(!value){message('أدخل الرقم التسلسلي');return}const changed=serialValue!==value;serialValue=value;displaySerial();await closeSerialModal();if(changed){requestId=crypto.randomUUID();await lookupSerial()}}
+function isSavId(value){return /^(?:SAV_\d{6}_\d{3,}|SAV-[A-Z0-9-]{12,90})$/i.test(String(value||'').trim())}
+function scanQR(){if(!tg?.showScanQrPopup){message('ماسح QR غير متاح');return}tg.showScanQrPopup({text:'وجّه الكاميرا نحو QR Code'},value=>{if(!value)return false;tg.closeScanQrPopup?.();if(isSavId(value)){activeCaseId=value.trim();closeSerialModal().then(()=>openCaseDetail());}else $('serialDraft').value=value;return true})}
 function barcodeStatus(s){$('barcodeStatus').textContent=s}
 function barcodeReader(){if(barcodeScanner)return barcodeScanner;if(!window.Html5Qrcode)throw Error('مكتبة Barcode غير متاحة');const F=Html5QrcodeSupportedFormats;barcodeScanner=new Html5Qrcode('barcodeReader',{formatsToSupport:[F.CODE_128,F.CODE_39,F.CODE_93,F.EAN_13,F.EAN_8,F.UPC_A],verbose:false});return barcodeScanner}
 async function scanBarcode(){if(barcodeBusy||cameraStarting||barcodeScanner?.isScanning)return;$('ocrPanel').hidden=true;$('barcodePanel').hidden=false;barcodeBusy=true;cameraStarting=true;barcodeDetected=false;try{const s=barcodeReader();barcodeStatus('جارٍ تشغيل الكاميرا...');await s.start({facingMode:'environment'},{fps:12,qrbox:(w,h)=>({width:Math.min(300,Math.floor(w*.9)),height:Math.min(110,Math.floor(h*.4))}),aspectRatio:1.7778},async value=>{if(barcodeDetected||!value)return;barcodeDetected=true;$('serialDraft').value=value;await stopBarcode();message('تمت القراءة. راجع الرقم ثم اعتمده.')},()=>{});if(!barcodeDetected)barcodeStatus('وجّه الكاميرا نحو الباركود وانتظر القراءة.')}catch(e){barcodeStatus('تعذر تشغيل الكاميرا: '+e.message)}finally{cameraStarting=false;barcodeBusy=false}}
@@ -107,7 +116,7 @@ async function refreshCaseDetail() {
     if($('caseModal').hidden)return;
     caseDetailData=data;
     const record=data.case;
-    $('caseNumber').textContent=record.Case_ID;
+    $('caseNumber').textContent=record.Case_ID; $('caseLabelButton').hidden=false;
     $('caseState').textContent='الحالة: '+(record.Status||'غير محددة');
     $('caseSubtitle').textContent='ملف الصيانة — عرض المعلومات والتدخلات والحركات';
     const fields=$('caseFields');fields.replaceChildren();
@@ -138,9 +147,51 @@ function showCaseTab(tab) {
     else area.append(detailEvent(r.Action||r.Entity,[r.Timestamp,r.Actor].filter(Boolean).join(' • '),[r.Field,r.Old_Value,r.New_Value,r.Notes].filter(Boolean).join(' — ')));
   });
 }
-async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!serial||!issue){message('أدخل الرقم التسلسلي ووصف العطل');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد استقبال الجهاز برقم:\n'+serial))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serial,issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':'');$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
-async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue'].forEach(k=>$(k).value='');$('lookupBox').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false}
+async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!serial||!issue){message('أدخل الرقم التسلسلي ووصف العطل');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد استقبال الجهاز برقم:\n'+serial))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serial,issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; $('labelButton').hidden=false;$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
+async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue'].forEach(k=>$(k).value='');$('lookupBox').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false;lastSavedId='';$('labelButton').hidden=true}
+
+let labelFor='';
+function showLabel(id) {
+  const caseId=id || lastSavedId;
+  if(!caseId || !isSavId(caseId)) {message('لم يتم تحديد رقم ملف صالح');return;}
+  if(!window.QRCode){message('تعذر تحميل مكتبة QR');return;}
+  labelFor=caseId;
+  $('labelCaseId').textContent=caseId;
+  $('labelQr').replaceChildren();
+  new QRCode($('labelQr'),{text:caseId,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
+  $('labelModal').hidden=false;
+  document.body.style.overflow='hidden';
+}
+function closeLabel(){ $('labelModal').hidden=true;document.body.style.overflow=''; }
+function downloadLabel(){
+  const qr=$('labelQr').querySelector('canvas');
+  if(!qr){message('الصورة لم تجهز بعد');return;}
+  const canvas=document.createElement('canvas');
+  canvas.width=600;canvas.height=420;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,600,420);
+  ctx.fillStyle='#111';ctx.textAlign='center';
+  ctx.font='bold 25px Arial';ctx.fillText('CAD SAV',300,36);
+  ctx.drawImage(qr,195,45,210,210);
+  ctx.font='bold 21px Arial';ctx.fillText(labelFor,300,295);
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+  a.download=labelFor+'.png';a.click();
+}
+
 displaySerial();
 </script>
+<section id="labelModal" class="modal" role="dialog" aria-modal="true" hidden>
+ <div class="modal-inner">
+  <div class="modal-top"><h3>🏷️ ملصق الجهاز</h3><button type="button" class="secondary" onclick="closeLabel()">✕ رجوع</button></div>
+  <div class="label-preview" id="printLabel">
+   <small>CAD SAV</small>
+   <div id="labelQr"></div>
+   <strong id="labelCaseId"></strong>
+  </div>
+  <p class="hint">الـ QR يحتوي رقم ملف الصيانة فقط. يمكنك طباعته أو حفظه صورة.</p>
+  <button type="button" onclick="window.print()">🖨️ طباعة الملصق</button>
+  <button type="button" class="secondary" onclick="downloadLabel()">💾 حفظ صورة QR</button>
+ </div>
+</section>
 </body>
 </html>
