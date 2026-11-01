@@ -9,14 +9,14 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:16px;font:15px Arial,sans-serif;background:var(--tg-theme-bg-color,#fff);color:var(--tg-theme-text-color,#222)}
-main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-size:12px;opacity:.65;margin-bottom:18px}label{display:block;font-weight:600;margin:14px 0 7px}input,textarea,button{font:inherit;width:100%;padding:12px;border-radius:9px}input,textarea{border:1px solid #aaa;background:var(--tg-theme-secondary-bg-color,#f7f7f7);color:var(--tg-theme-text-color,#222)}textarea{resize:vertical;min-height:92px}button{border:0;margin-top:10px;cursor:pointer;background:var(--tg-theme-button-color,#2481cc);color:var(--tg-theme-button-text-color,#fff);font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:var(--tg-theme-secondary-bg-color,#e9edf3);color:var(--tg-theme-text-color,#222);border:1px solid #aaa}.serial-trigger{text-align:start;direction:ltr;font-weight:400;background:var(--tg-theme-secondary-bg-color,#f7f7f7);border:1px solid #aaa;color:var(--tg-theme-hint-color,#666)}.serial-trigger.has-value{color:var(--tg-theme-text-color,#222)}.status{font-size:13px;line-height:1.6;overflow-wrap:anywhere}[hidden]{display:none!important}.modal{position:fixed;inset:0;z-index:100;background:var(--tg-theme-bg-color,#fff);overflow-y:auto;padding:16px 16px calc(22px + env(safe-area-inset-bottom))}.modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.modal-top h3{margin:0}.modal-top button{width:auto;margin:0}.methods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 6px}.methods button{margin:0;padding:12px 5px;font-size:13px}.panel{padding:12px;margin-top:12px;border:1px solid #aaa;border-radius:10px}#barcodeReader{width:100%}#ocrText{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left}.hint{color:var(--tg-theme-hint-color,#666);font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.result{border:1px solid #bbb;border-radius:9px;padding:11px;margin-top:12px}.result b{display:block;margin-bottom:5px}.success{border-color:#1d9b60}.warning{border-color:#d39516}
+main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-size:12px;opacity:.65;margin-bottom:18px}label{display:block;font-weight:600;margin:14px 0 7px}input,textarea,button{font:inherit;width:100%;padding:12px;border-radius:9px}input,textarea{border:1px solid #aaa;background:var(--tg-theme-secondary-bg-color,#f7f7f7);color:var(--tg-theme-text-color,#222)}textarea{resize:vertical;min-height:92px}button{border:0;margin-top:10px;cursor:pointer;background:var(--tg-theme-button-color,#2481cc);color:var(--tg-theme-button-text-color,#fff);font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:var(--tg-theme-secondary-bg-color,#e9edf3);color:var(--tg-theme-text-color,#222);border:1px solid #aaa}.serial-trigger{text-align:start;direction:ltr;font-weight:400;background:var(--tg-theme-secondary-bg-color,#f7f7f7);border:1px solid #aaa;color:var(--tg-theme-hint-color,#666)}.serial-trigger.has-value{color:var(--tg-theme-text-color,#222)}.status{font-size:13px;line-height:1.6;overflow-wrap:anywhere}[hidden]{display:none!important}.modal{position:fixed;inset:0;z-index:100;background:var(--tg-theme-bg-color,#fff);overflow-y:auto;padding:16px 16px calc(22px + env(safe-area-inset-bottom))}.modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.modal-top h3{margin:0}.modal-top button{width:auto;margin:0}.methods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 6px}.methods button{margin:0;padding:12px 5px;font-size:13px}.panel{padding:12px;margin-top:12px;border:1px solid #aaa;border-radius:10px}#barcodeReader{width:100%}#ocrText{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left}.hint{color:var(--tg-theme-hint-color,#666);font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.result{border:1px solid #bbb;border-radius:9px;padding:11px;margin-top:12px}.result b{display:block;margin-bottom:5px}.success{border-color:#1d9b60}.warning{border-color:#d39516}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.detail-field{border:1px solid #bbb;border-radius:8px;padding:9px;overflow-wrap:anywhere}.detail-field small{display:block;color:var(--tg-theme-hint-color,#666);margin-bottom:5px}.detail-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.detail-tabs button{font-size:12px;padding:11px 4px;margin:0}.event{border-bottom:1px solid #bbb;padding:10px 0}.event:last-child{border-bottom:0}.event small{display:block;color:var(--tg-theme-hint-color,#666);margin-top:4px}
 </style>
 </head>
 <body>
 <main>
-<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.04</div>
+<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.05</div>
 <label for="serialTrigger">الرقم التسلسلي</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
-<div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div></div>
+<div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button></div>
 <div class="grid"><div><label for="customer">العميل</label><input id="customer" maxlength="120" placeholder="Nom du client"></div><div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" maxlength="50" dir="ltr" placeholder="Téléphone"></div></div>
 <div class="grid"><div><label for="product">نوع الجهاز</label><input id="product" maxlength="120" placeholder="Produit"></div><div><label for="brand">العلامة</label><input id="brand" maxlength="120" placeholder="Marque"></div></div>
 <label for="model">الموديل</label><input id="model" maxlength="120" dir="ltr" placeholder="Modèle">
@@ -34,12 +34,30 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 <div id="ocrPanel" class="panel" hidden><label for="ocrFile">التقط صورة الرقم المطبوع</label><input id="ocrFile" type="file" accept="image/*" capture="environment" onchange="readSerialOCR(this)"><p id="ocrStatus" class="status"></p><details id="ocrDetails" hidden><summary>عرض النص المستخرج</summary><pre id="ocrText"></pre></details></div>
 <button type="button" onclick="applySerial()">✅ اعتماد الرقم</button>
 </div></section>
+<section id="caseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="caseHeading" hidden>
+ <div class="modal-inner">
+  <div class="modal-top"><h3 id="caseHeading">📂 بطاقة الصيانة</h3><button class="secondary" type="button" onclick="closeCaseDetail()">✕ رجوع</button></div>
+  <p class="hint" id="caseSubtitle">جاري تحميل البيانات...</p>
+  <div id="caseLoading" class="status" role="status"></div>
+  <div id="caseContent" hidden>
+   <div class="result"><b id="caseNumber" dir="ltr"></b><div id="caseState"></div></div>
+   <div class="detail-grid" id="caseFields"></div>
+   <div class="detail-tabs" role="group" aria-label="أقسام بطاقة الصيانة">
+    <button type="button" class="secondary" onclick="showCaseTab('interventions')">🛠 التدخلات</button>
+    <button type="button" class="secondary" onclick="showCaseTab('movements')">🚚 الحركة</button>
+    <button type="button" class="secondary" onclick="showCaseTab('history')">🕘 السجل</button>
+   </div>
+   <div id="caseTabContent" class="panel"></div>
+  </div>
+  <button type="button" onclick="refreshCaseDetail()" class="secondary">↻ تحديث البطاقة</button>
+ </div>
+</section>
 <script>
 'use strict';
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
 const $=id=>document.getElementById(id), tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand()}
-let serialValue='', saving=false, lookupVersion=0, lookupResult=null;
+let serialValue='', saving=false, lookupVersion=0, lookupResult=null, activeCaseId='', caseDetailData=null, caseTab='interventions';
 let requestId=crypto.randomUUID(), barcodeScanner=null,barcodeBusy=false,barcodeDetected=false, cameraStarting=false,ocrBusy=false;
 function message(text){if(tg?.showAlert && tg.initData)tg.showAlert(text);else alert(text)}
 function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.initData)tg.showConfirm(text,done);else done(confirm(text))})}
@@ -56,9 +74,72 @@ async function readBarcodeImage(input){const f=input.files?.[0];if(!f||barcodeBu
 async function showOCRPicker(){if(ocrBusy||cameraStarting||barcodeBusy)return;await stopBarcode();$('ocrPanel').hidden=false;$('ocrFile').click()}
 async function readSerialOCR(input){const file=input.files?.[0];if(!file||ocrBusy)return;ocrBusy=true;input.disabled=true;let worker;const output=$('ocrText');$('ocrDetails').hidden=false;$('ocrStatus').textContent='جارٍ قراءة الصورة...';output.textContent='';try{worker=await Tesseract.createWorker('eng');await worker.setParameters({tessedit_pageseg_mode:'11'});const t=(await worker.recognize(file)).data.text||'';output.textContent=t.trim()||'لم يتم استخراج أي نص';const m=t.match(/(?:S\s*\/\s*N|Serial\s*(?:No\.?|Number)?)\s*[:\-]?\s*([A-Z0-9-]{8,})/i);if(m){$('serialDraft').value=m[1];$('ocrStatus').textContent='تم استخراج رقم محتمل؛ راجعه قبل الاعتماد.'}else $('ocrStatus').textContent='راجع النص المستخرج وأدخل الرقم الصحيح.'}catch(e){$('ocrStatus').textContent='تعذرت القراءة: '+e.message}finally{if(worker)try{await worker.terminate()}catch{}input.disabled=false;input.value='';ocrBusy=false}}
 async function apiCall(path,payload){const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:tg?.initData||'',...payload})});const x=await r.json();if(!r.ok||!x.ok)throw Error(x.error||'HTTP_'+r.status);return x}
-async function lookupSerial(){const v=++lookupVersion;lookupResult=null;$('lookupBox').hidden=false;$('lookupBox').className='result';$('lookupTitle').textContent='⏳ جارٍ البحث عن الجهاز...';$('lookupText').textContent='';try{const x=await apiCall('/api/lookup',{serial:serialValue});if(v!==lookupVersion)return;lookupResult=x;if(x.kind==='NEW_DEVICE'){$('lookupBox').classList.add('success');$('lookupTitle').textContent='✅ جهاز جديد';$('lookupText').textContent='لا توجد ملفات صيانة سابقة.'}else if(x.kind==='OPEN_CASE'){$('lookupBox').classList.add('warning');$('lookupTitle').textContent='⚠️ يوجد ملف صيانة مفتوح';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — الملف: ${x.openCases[0]?.caseId||'غير محدد'}`}else{$('lookupTitle').textContent='📋 صيانة سابقة';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — آخر ملف: ${x.lastCase?.caseId||'غير محدد'}`}}catch(e){if(v!==lookupVersion)return;$('lookupTitle').textContent='تعذر البحث';$('lookupText').textContent=e.message==='INVALID_TELEGRAM_AUTH'?'أعد فتح التطبيق من Telegram ثم جرّب.':'تحقق من الاتصال ثم اعتمد الرقم مجددًا.'}}
+async function lookupSerial(){const v=++lookupVersion;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;$('lookupBox').hidden=false;$('lookupBox').className='result';$('lookupTitle').textContent='⏳ جارٍ البحث عن الجهاز...';$('lookupText').textContent='';try{const x=await apiCall('/api/lookup',{serial:serialValue});if(v!==lookupVersion)return;lookupResult=x;activeCaseId=x.kind==='OPEN_CASE'?(x.openCases?.[0]?.caseId||''):(x.lastCase?.caseId||'');$('openCaseButton').hidden=!activeCaseId;if(x.kind==='NEW_DEVICE'){$('lookupBox').classList.add('success');$('lookupTitle').textContent='✅ جهاز جديد';$('lookupText').textContent='لا توجد ملفات صيانة سابقة.'}else if(x.kind==='OPEN_CASE'){$('lookupBox').classList.add('warning');$('lookupTitle').textContent='⚠️ يوجد ملف صيانة مفتوح';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — الملف: ${x.openCases[0]?.caseId||'غير محدد'}`}else{$('lookupTitle').textContent='📋 صيانة سابقة';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — آخر ملف: ${x.lastCase?.caseId||'غير محدد'}`}}catch(e){if(v!==lookupVersion)return;$('lookupTitle').textContent='تعذر البحث';$('lookupText').textContent=e.message==='INVALID_TELEGRAM_AUTH'?'أعد فتح التطبيق من Telegram ثم جرّب.':'تحقق من الاتصال ثم اعتمد الرقم مجددًا.'}}
+
+function detailField(label,value) {
+  const box=document.createElement('div');box.className='detail-field';
+  const head=document.createElement('small');head.textContent=label;
+  const text=document.createElement('div');text.textContent=value||'—';
+  box.append(head,text);return box;
+}
+function detailEvent(title, subtitle, description) {
+  const wrap=document.createElement('div');wrap.className='event';
+  const strong=document.createElement('strong');strong.textContent=title||'—';
+  const small=document.createElement('small');small.textContent=subtitle||'';
+  const body=document.createElement('div');body.textContent=description||'';
+  wrap.append(strong,small,body);return wrap;
+}
+async function openCaseDetail() {
+  if(!activeCaseId)return;
+  $('caseModal').hidden=false;document.body.style.overflow='hidden';
+  await refreshCaseDetail();
+}
+function closeCaseDetail() {
+  $('caseModal').hidden=true;
+  document.body.style.overflow='';
+}
+async function refreshCaseDetail() {
+  if(!activeCaseId)return;
+  const loading=$('caseLoading');loading.textContent='⏳ جارٍ تحميل بطاقة الصيانة...';
+  $('caseContent').hidden=true;
+  try {
+    const data=await apiCall('/api/case-detail',{caseId:activeCaseId});
+    if($('caseModal').hidden)return;
+    caseDetailData=data;
+    const record=data.case;
+    $('caseNumber').textContent=record.Case_ID;
+    $('caseState').textContent='الحالة: '+(record.Status||'غير محددة');
+    $('caseSubtitle').textContent='ملف الصيانة — عرض المعلومات والتدخلات والحركات';
+    const fields=$('caseFields');fields.replaceChildren();
+    [
+      ['الرقم التسلسلي',record.Serial_Number],['تاريخ الاستقبال',record.Created_At],
+      ['العميل',record.Customer_Name],['الهاتف',record.Customer_Phone],
+      ['الجهاز',record.Product],['العلامة',record.Brand],['الموديل',record.Model],
+      ['العطل',record.Issue_Description],['التقني المكلف',record.Assigned_Technician],
+      ['الموقع الحالي',record.Current_Location],['الأولوية',record.Priority],
+      ['تاريخ الإغلاق',record.Closed_At]
+    ].forEach(([label,value])=>fields.append(detailField(label,value)));
+    loading.textContent='';$('caseContent').hidden=false;
+    showCaseTab(caseTab);
+  } catch(e) {
+    loading.textContent='❌ تعذر تحميل بطاقة الصيانة: '+e.message;
+  }
+}
+function showCaseTab(tab) {
+  caseTab=tab;
+  const area=$('caseTabContent');area.replaceChildren();
+  if(!caseDetailData)return;
+  const d=caseDetailData;
+  const rows=tab==='interventions'?d.interventions:tab==='movements'?d.movements:d.history;
+  if(!rows?.length){area.textContent=tab==='interventions'?'لم تُسجل تدخلات تقنية بعد.':tab==='movements'?'لم تُسجل حركة للجهاز بعد.':'لا توجد أحداث مسجلة في السجل.';return}
+  [...rows].reverse().forEach(r=>{
+    if(tab==='interventions')area.append(detailEvent(r.Task_Type||r.Intervention_ID, [r.Technician,r.Status,r.Started_At].filter(Boolean).join(' • '),[r.Diagnosis,r.Work_Performed,r.Result,r.Notes].filter(Boolean).join(' — ')));
+    else if(tab==='movements')area.append(detailEvent((r.From_Location||'؟')+' → '+(r.To_Location||'؟'),[r.Movement_Status,r.Sent_At,r.Received_At].filter(Boolean).join(' • '),r.Notes));
+    else area.append(detailEvent(r.Action||r.Entity,[r.Timestamp,r.Actor].filter(Boolean).join(' • '),[r.Field,r.Old_Value,r.New_Value,r.Notes].filter(Boolean).join(' — ')));
+  });
+}
 async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!serial||!issue){message('أدخل الرقم التسلسلي ووصف العطل');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد استقبال الجهاز برقم:\n'+serial))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serial,issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':'');$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
-async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue'].forEach(k=>$(k).value='');$('lookupBox').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false}
+async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue'].forEach(k=>$(k).value='');$('lookupBox').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false}
 displaySerial();
 </script>
 </body>
