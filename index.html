@@ -25,6 +25,8 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 .label-preview small{font-size:9pt;font-weight:bold;grid-column:2;grid-row:1}
 #labelQr{grid-column:1;grid-row:1 / 3} #labelQr canvas,#labelQr img{display:block;margin:auto;width:23mm!important;height:23mm!important}
 @media print { body *{visibility:hidden!important} #printLabel,#printLabel *{visibility:visible!important}#printLabel{position:fixed;left:0;top:0;margin:0;border:0} @page {size:50mm 30mm;margin:0} }
+
+.field-actions{display:flex;gap:5px;align-items:center}.compact-button{width:auto;min-height:35px;padding:7px 9px;font-size:12px;margin:0}.field-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.field-filter{min-width:0;position:relative}.field-filter summary{font-size:12px;border:1px solid var(--cad-border);border-radius:9px;padding:10px 7px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;background:var(--tg-theme-secondary-bg-color,#f3f6f9)}.filter-options{max-height:175px;overflow:auto;padding:7px 4px;border:1px solid var(--cad-border);border-radius:8px;margin-top:4px}.filter-choice{display:flex;align-items:center;gap:7px;margin:0;padding:7px 4px;font-size:12px;font-weight:normal}.filter-choice input{width:17px;height:17px;padding:0;margin:0;flex:none}.table-scroll{overflow:auto}.field-table{min-width:455px;font-size:12px}.field-table th,.field-table td{padding:8px 5px;white-space:nowrap}.table-open{width:37px;min-width:37px;min-height:34px;padding:5px;font-size:19px}.page-heading .compact-button{font-size:11px}
 </style>
 </head>
 <body>
@@ -46,30 +48,28 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section><p id="homeNotice" class="status" role="status"></p>
 </section>
 <section id="fieldDirectory" hidden>
- <div class="page-heading"><button type="button" class="secondary back-small" onclick="closeFieldDirectory()">← الرئيسية</button><h2>🏠 التدخلات الخارجية</h2></div>
+ <div class="page-heading"><button type="button" class="secondary back-small" onclick="closeFieldDirectory()">← العودة</button><h2>🏠 التدخلات الخارجية</h2></div>
  <p class="hint">طلبات التدخل لدى الزبائن، مستقلة عن محطات ومخازن CAD.</p>
  <button id="fieldNewButton" type="button" onclick="newFieldRequest()">➕ طلب تدخل جديد</button>
- <div class="panel"><div class="page-heading"><strong>قائمة التدخلات</strong><button type="button" class="secondary back-small" onclick="loadFieldDirectory()">↻ تحديث</button></div>
- <div class="grid"><div><label for="fieldStatusFilter">الحالة (اختيار متعدد)</label><select id="fieldStatusFilter" multiple size="4" onchange="renderFieldDirectory()"></select></div>
- <div><label for="fieldTechFilter">التقني (اختيار متعدد)</label><select id="fieldTechFilter" multiple size="4" onchange="renderFieldDirectory()"></select></div></div>
- <p class="hint">يمكنك اختيار أكثر من عنصر. ترك التحديد فارغًا يعرض الكل.</p>
- <button class="secondary" type="button" onclick="resetFieldFilters()">مسح الفلاتر</button>
+ <div class="panel"><div class="page-heading"><strong>قائمة التدخلات</strong><div class="field-actions"><button type="button" class="secondary compact-button" onclick="resetFieldFilters()">مسح الفلاتر</button><button type="button" class="secondary compact-button" onclick="loadFieldDirectory()">↻ تحديث</button></div></div>
+ <div class="field-filter-grid"><details class="field-filter"><summary id="fieldStatusSummary">الحالة: الكل</summary><div id="fieldStatusFilter" class="filter-options"></div></details><details class="field-filter"><summary id="fieldTechSummary">التقني: الكل</summary><div id="fieldTechFilter" class="filter-options"></div></details></div>
  <p id="fieldDirectoryStatus" class="status" role="status"></p>
- <div class="table-scroll"><table class="field-table"><thead><tr><th>رقم التدخل</th><th>التقني</th><th>الحالة</th><th>البطاقة</th></tr></thead><tbody id="fieldRows"></tbody></table></div>
+ <div class="table-scroll"><table class="field-table"><thead><tr><th>رقم التدخل</th><th>تاريخ الطلب</th><th>التقني</th><th>الحالة</th><th>البطاقة</th></tr></thead><tbody id="fieldRows"></tbody></table></div>
  </div>
 </section>
-<section id="serviceScreen" hidden><div class="page-heading"><button type="button" class="secondary back-small" onclick="backHome()">← الرئيسية</button><div><h2 id="serviceHeading">إصلاح أجهزة</h2><span class="hint" id="serviceCaption">بحث واستقبال الأجهزة</span></div></div>
-<div class="version">CAD SAV · V1.12</div>
+<section id="serviceScreen" hidden><div class="page-heading"><button type="button" class="secondary back-small" onclick="backHome()">← العودة</button><div><h2 id="serviceHeading">إصلاح أجهزة</h2><span class="hint" id="serviceCaption">بحث واستقبال الأجهزة</span></div></div>
+<div class="version">CAD SAV · V1.12.1</div>
 <label for="serviceMode" hidden>نوع طلب الصيانة</label><select id="serviceMode" hidden onchange="serviceModeChanged()"><option value="IN_SHOP">جهاز مستلَم لدى CAD</option><option value="FIELD">تدخل لدى الزبون</option></select>
 <div id="receptionLocationBox" hidden><label for="receptionLocation">فرع استقبال الطلب</label><select id="receptionLocation"></select></div><div id="fieldAddressBox" hidden><label for="customerAddress">عنوان تدخل الزبون</label><textarea id="customerAddress" maxlength="500" placeholder="عنوان المنزل أو المقر"></textarea></div>
-<label for="serialTrigger">الرقم التسلسلي</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
+<div id="fieldDatesBox" hidden><div class="grid"><div><label for="requestDate">تاريخ الطلب</label><input type="date" id="requestDate"></div><div><label for="interventionDate">تاريخ التدخل (اختياري)</label><input type="date" id="interventionDate"></div></div><p class="hint">تاريخ إنشاء البطاقة يُسجّل آليًا عند الحفظ.</p></div>
+<label for="serialTrigger">الرقم التسلسلي (اختياري للتدخل الخارجي)</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
 <div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button><div id="newDeviceHint" hidden><p class="hint">جهاز جديد: يجب إنشاء ملف صيانة أولًا قبل فتح بطاقته.</p><button type="button" class="secondary" onclick="createNewDeviceCard()">➕ إنشاء بطاقة لهذا الجهاز</button></div></div>
 <div class="grid"><div><label for="customer">العميل</label><input id="customer" maxlength="120" placeholder="Nom du client"></div><div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" maxlength="50" dir="ltr" placeholder="Téléphone"></div></div>
 <div class="grid"><div><label for="product">نوع الجهاز</label><input id="product" maxlength="120" placeholder="Produit"></div><div><label for="brand">العلامة</label><input id="brand" maxlength="120" placeholder="Marque"></div></div>
 <label for="model">الموديل</label><input id="model" maxlength="120" dir="ltr" placeholder="Modèle">
 <label for="issue">وصف العطل</label><textarea id="issue" maxlength="1000" placeholder="Description de panne"></textarea>
 <button id="saveButton" type="button" onclick="saveSAV()">💾 تسجيل الاستقبال</button>
-<button type="button" class="secondary" onclick="clearForm()">🧹 تفريغ البطاقة</button>
+
 <p id="status" class="status" role="status"></p>
 <button id="labelButton" type="button" onclick="showLabel()" hidden>🏷️ عرض ملصق QR للملف</button>
 </section></main>
@@ -146,7 +146,7 @@ function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.
 const ROLE_LABELS={SAV_MANAGER:'مسؤول المصلحة',BRANCH_MANAGER:'مسؤول الفرع',WAREHOUSE_MANAGER:'مسؤول المستودع',INTERNAL_TECH:'التقني الداخلي',EXTERNAL_TECH:'التقني الخارجي'};
 let fieldData=[],fieldOpenFromList=false;
 function openService(mode){$('homeScreen').hidden=true;$('serviceScreen').hidden=false;$('serviceMode').value=mode;$('serviceHeading').textContent=mode==='FIELD'?'تدخلات خارجية':'إصلاح أجهزة';$('serviceCaption').textContent=mode==='FIELD'?'طلبات الصيانة لدى الزبائن':'استقبال الأجهزة والبحث عن ملفات الصيانة';serviceModeChanged();window.scrollTo(0,0);}
-function backHome(){if(saving)return;$('serviceScreen').hidden=true;if(fieldOpenFromList){$('fieldDirectory').hidden=false;fieldOpenFromList=false;loadFieldDirectory();}else $('homeScreen').hidden=false;window.scrollTo(0,0);}
+function backHome(){if(saving)return;const field=fieldOpenFromList;clearFieldDraft();$('serviceScreen').hidden=true;if(field){$('fieldDirectory').hidden=false;fieldOpenFromList=false;loadFieldDirectory();}else $('homeScreen').hidden=false;window.scrollTo(0,0);}
 
 function openFieldDirectory(){
  $('homeScreen').hidden=true;$('serviceScreen').hidden=true;$('fieldDirectory').hidden=false;
@@ -159,16 +159,17 @@ function newFieldRequest(){
  clearFieldDraft();
  $('fieldDirectory').hidden=true;
  openService('FIELD');
- $('serviceHeading').textContent='بطاقة تدخل جديد';
+ $('serviceHeading').textContent='بطاقة تدخل جديد';$('requestDate').value=localToday();
  $('saveButton').hidden=false;
  $('saveButton').textContent='💾 حفظ طلب التدخل';
 }
 function clearFieldDraft(){
  serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';lastSavedId='';
- for(const id of ['customer','phone','product','brand','model','issue','customerAddress'])$(id).value='';
+ for(const id of ['customer','phone','product','brand','model','issue','customerAddress','requestDate','interventionDate'])$(id).value='';
  $('lookupBox').hidden=true;$('status').textContent='';$('labelButton').hidden=true;$('saveButton').disabled=false;
- displaySerial();
+ $('openCaseButton').hidden=true;$('requestDate').value=localToday();displaySerial();
 }
+function localToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Algiers',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}
 async function loadFieldDirectory(){
  $('fieldDirectoryStatus').textContent='⏳ جارٍ تحميل قائمة التدخلات...';
  try{
@@ -179,25 +180,27 @@ async function loadFieldDirectory(){
  }catch(e){$('fieldDirectoryStatus').textContent='❌ تعذر تحميل القائمة: '+e.message;}
 }
 function setMultiOptions(id,values){
- const el=$(id),selected=new Set([...el.selectedOptions].map(x=>x.value));el.replaceChildren();
- values.filter(Boolean).sort().forEach(value=>{const o=document.createElement('option');o.value=value;o.textContent=value;o.selected=selected.has(value);el.append(o);});
+ const el=$(id),selected=new Set([...el.querySelectorAll('input:checked')].map(x=>x.value));el.replaceChildren();
+ for(const value of values.filter(Boolean).sort()){const label=document.createElement('label');label.className='filter-choice';const input=document.createElement('input');input.type='checkbox';input.value=value;input.checked=selected.has(value);input.addEventListener('change',renderFieldDirectory);const text=document.createElement('span');text.textContent=value;label.append(input,text);el.append(label);}
 }
-function resetFieldFilters(){for(const id of ['fieldStatusFilter','fieldTechFilter'])for(const o of $(id).options)o.selected=false;renderFieldDirectory();}
+function selectedFilter(id){return new Set([...$(id).querySelectorAll('input:checked')].map(x=>x.value));}
+function resetFieldFilters(){for(const el of document.querySelectorAll('#fieldStatusFilter input,#fieldTechFilter input'))el.checked=false;renderFieldDirectory();}
 function renderFieldDirectory(){
- const statuses=new Set([...$('fieldStatusFilter').selectedOptions].map(o=>o.value));
- const technicians=new Set([...$('fieldTechFilter').selectedOptions].map(o=>o.value));
+ const statuses=selectedFilter('fieldStatusFilter'),technicians=selectedFilter('fieldTechFilter');
+ $('fieldStatusSummary').textContent='الحالة: '+(statuses.size?`${statuses.size} محدد`:'الكل');
+ $('fieldTechSummary').textContent='التقني: '+(technicians.size?`${technicians.size} محدد`:'الكل');
  const rows=fieldData.filter(r=>(!statuses.size||statuses.has(r.status))&&(!technicians.size||technicians.has(r.technician||'غير معين')));
  const tbody=$('fieldRows');tbody.replaceChildren();
  for(const item of rows){
   const tr=document.createElement('tr');
-  for(const value of [item.caseId,item.technician||'غير معين',item.status]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
-  const td=document.createElement('td');const btn=document.createElement('button');btn.className='secondary table-open';btn.textContent='فتح';btn.onclick=()=>{activeCaseId=item.caseId;openCaseDetail();};td.append(btn);tr.append(td);tbody.append(tr);
+  for(const value of [item.caseId,item.requestDate||item.createdAt?.slice(0,10)||'—',item.technician||'غير معين',item.status]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+  const td=document.createElement('td');const btn=document.createElement('button');btn.className='secondary table-open';btn.title='فتح بطاقة التدخل';btn.setAttribute('aria-label','فتح بطاقة التدخل '+item.caseId);btn.textContent='📋';btn.onclick=()=>{activeCaseId=item.caseId;openCaseDetail();};td.append(btn);tr.append(td);tbody.append(tr);
  }
  $('fieldDirectoryStatus').textContent=`النتائج: ${rows.length} من ${fieldData.length}`;
- if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent='لا توجد تدخلات مطابقة.';tr.append(td);tbody.append(tr);}
+ if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='لا توجد تدخلات مطابقة.';tr.append(td);tbody.append(tr);}
 }
 
-function serviceModeChanged(){$('fieldAddressBox').hidden=$('serviceMode').value!=='FIELD';$('serialTrigger').textContent=serialValue||($('serviceMode').value==='FIELD'?'رقم الجهاز إن وُجد (اختياري)':'اضغط لإدخال الرقم أو مسحه...');}
+function serviceModeChanged(){$('fieldAddressBox').hidden=$('serviceMode').value!=='FIELD';$('fieldDatesBox').hidden=$('serviceMode').value!=='FIELD';$('receptionLocationBox').hidden=true;$('serialTrigger').textContent=serialValue||($('serviceMode').value==='FIELD'?'رقم الجهاز إن وُجد (اختياري)':'اضغط لإدخال الرقم أو مسحه...');}
 function displaySerial(){$('serialTrigger').textContent=serialValue||'اضغط لإدخال الرقم أو مسحه...';$('serialTrigger').classList.toggle('has-value',!!serialValue)}
 function openSerialModal(){$('serialDraft').value=serialValue;$('serialModal').hidden=false;document.body.style.overflow='hidden'}
 async function closeSerialModal(){if(ocrBusy||cameraStarting){message('انتظر اكتمال القراءة');return}await stopBarcode();$('serialModal').hidden=true;$('ocrPanel').hidden=true;document.body.style.overflow=''}
@@ -261,7 +264,7 @@ async function refreshCaseDetail() {
     $('newInterventionButton').textContent=record.Status==='مغلق'?'🔒 ملف مغلق':'➕ تسجيل تدخل تقني';
     const fields=$('caseFields');fields.replaceChildren();
     [
-      ['نوع الطلب',record.Service_Mode==='FIELD'?'تدخل لدى الزبون':'جهاز مستلَم'],['عنوان التدخل',record.Customer_Address],['الرقم التسلسلي',record.Serial_Number],['تاريخ الاستقبال',readableDate(record.Created_At)],
+      ['نوع الطلب',record.Service_Mode==='FIELD'?'تدخل لدى الزبون':'جهاز مستلَم'],['تاريخ الطلب',record.Request_Date],['تاريخ إنشاء البطاقة',readableDate(record.Created_At)],['تاريخ التدخل',record.Intervention_Date],['عنوان التدخل',record.Customer_Address],['الرقم التسلسلي',record.Serial_Number],['تاريخ الاستقبال',readableDate(record.Created_At)],
       ['العميل',record.Customer_Name],['الهاتف',record.Customer_Phone],
       ['الجهاز',record.Product],['العلامة',record.Brand],['الموديل',record.Model],
       ['العطل',record.Issue_Description],['التقني المكلف',record.Assigned_Technician],
@@ -392,7 +395,7 @@ async function saveAssignment(){
  assignmentBusy=true;$('assignmentSave').disabled=true;
  try{await apiCall('/api/assignments',{caseId:activeCaseId,technicianUserId,notes:$('assignmentNotes').value.trim(),requestId:assignmentRequestId});assignmentRequestId=crypto.randomUUID();$('assignmentStatus').textContent='✅ تمت الإحالة';await refreshCaseDetail();}catch(e){$('assignmentStatus').textContent='❌ '+e.message;}finally{assignmentBusy=false;$('assignmentSave').disabled=false;}
 }
-async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!issue||(!serial&&$('serviceMode').value!=='FIELD')){message('أدخل وصف العطل والرقم التسلسلي للأجهزة المستلمة');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد تسجيل طلب الصيانة؟'))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serviceMode:$('serviceMode').value,receptionLocation:$('receptionLocation').value,customerAddress:$('customerAddress').value.trim(),serial:serial||('FIELD-'+requestId),issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; activeCaseId=result.caseId; $('openCaseButton').hidden=false; $('newDeviceHint').hidden=true; $('lookupBox').hidden=false; $('lookupBox').className='result success'; $('lookupTitle').textContent='✅ الملف جاهز'; $('lookupText').textContent='تم إنشاء بطاقة الصيانة '+result.caseId; $('labelButton').hidden=false;$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
+async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!issue||(!serial&&$('serviceMode').value!=='FIELD')){message('أدخل وصف العطل والرقم التسلسلي للأجهزة المستلمة');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد تسجيل طلب الصيانة؟'))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serviceMode:$('serviceMode').value,receptionLocation:$('receptionLocation').value,customerAddress:$('customerAddress').value.trim(),requestDate:$('serviceMode').value==='FIELD'?$('requestDate').value:'',interventionDate:$('serviceMode').value==='FIELD'?$('interventionDate').value:'',serial:serial||('FIELD-'+requestId),issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; activeCaseId=result.caseId; $('openCaseButton').hidden=false; $('newDeviceHint').hidden=true; $('lookupBox').hidden=false; $('lookupBox').className='result success'; $('lookupTitle').textContent='✅ الملف جاهز'; $('lookupText').textContent='تم إنشاء بطاقة الصيانة '+result.caseId; $('labelButton').hidden=false;$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
 async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue','customerAddress'].forEach(k=>$(k).value='');$('serviceMode').value='IN_SHOP';serviceModeChanged();$('lookupBox').hidden=true;$('newDeviceHint').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false;lastSavedId='';$('labelButton').hidden=true}
 
 let labelFor='';
