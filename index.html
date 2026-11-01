@@ -1,312 +1,238 @@
-import { http } from '@google-cloud/functions-framework';
-import { GoogleAuth } from 'google-auth-library';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CAD SAV</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:16px;font:15px Arial,sans-serif;background:var(--tg-theme-bg-color,#fff);color:var(--tg-theme-text-color,#222)}
+main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-size:12px;opacity:.65;margin-bottom:18px}label{display:block;font-weight:600;margin:14px 0 7px}input,textarea,select,button{font:inherit;width:100%;padding:12px;border-radius:9px}input,textarea,select{border:1px solid #aaa;background:var(--tg-theme-secondary-bg-color,#f7f7f7);color:var(--tg-theme-text-color,#222)}textarea{resize:vertical;min-height:92px}button{border:0;margin-top:10px;cursor:pointer;background:var(--tg-theme-button-color,#2481cc);color:var(--tg-theme-button-text-color,#fff);font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:var(--tg-theme-secondary-bg-color,#e9edf3);color:var(--tg-theme-text-color,#222);border:1px solid #aaa}.serial-trigger{text-align:start;direction:ltr;font-weight:400;background:var(--tg-theme-secondary-bg-color,#f7f7f7);border:1px solid #aaa;color:var(--tg-theme-hint-color,#666)}.serial-trigger.has-value{color:var(--tg-theme-text-color,#222)}.status{font-size:13px;line-height:1.6;overflow-wrap:anywhere}[hidden]{display:none!important}.modal{position:fixed;inset:0;z-index:100;background:var(--tg-theme-bg-color,#fff);overflow-y:auto;padding:16px 16px calc(22px + env(safe-area-inset-bottom))}.modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.modal-top h3{margin:0}.modal-top button{width:auto;margin:0}.methods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 6px}.methods button{margin:0;padding:12px 5px;font-size:13px}.panel{padding:12px;margin-top:12px;border:1px solid #aaa;border-radius:10px}#barcodeReader{width:100%}#ocrText{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left}.hint{color:var(--tg-theme-hint-color,#666);font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.result{border:1px solid #bbb;border-radius:9px;padding:11px;margin-top:12px}.result b{display:block;margin-bottom:5px}.success{border-color:#1d9b60}.warning{border-color:#d39516}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.detail-field{border:1px solid #bbb;border-radius:8px;padding:9px;overflow-wrap:anywhere}.detail-field small{display:block;color:var(--tg-theme-hint-color,#666);margin-bottom:5px}.detail-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.detail-tabs button{font-size:12px;padding:11px 4px;margin:0}.event{border-bottom:1px solid #bbb;padding:10px 0}.event:last-child{border-bottom:0}.event small{display:block;color:var(--tg-theme-hint-color,#666);margin-top:4px}
+.label-preview{background:white;color:#111;padding:1mm;width:50mm;height:30mm;margin:12px auto;border:1px solid #ddd;text-align:center;direction:ltr;display:grid;grid-template-columns:25mm 23mm;grid-template-rows:12mm 15mm;column-gap:0;align-items:center;justify-items:center;overflow:hidden}
+.label-preview strong{font-size:7pt;font-family:Arial,sans-serif;overflow-wrap:anywhere;grid-column:2;grid-row:2}
+.label-preview small{font-size:9pt;font-weight:bold;grid-column:2;grid-row:1}
+#labelQr{grid-column:1;grid-row:1 / 3} #labelQr canvas,#labelQr img{display:block;margin:auto;width:23mm!important;height:23mm!important}
+@media print { body *{visibility:hidden!important} #printLabel,#printLabel *{visibility:visible!important}#printLabel{position:fixed;left:0;top:0;margin:0;border:0} @page {size:50mm 30mm;margin:0} }
+</style>
+</head>
+<body>
+<main>
+<h2>🔧 CAD SAV</h2><div class="version">Réception SAV — V1.07</div>
+<label for="serialTrigger">الرقم التسلسلي</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
+<div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button></div>
+<div class="grid"><div><label for="customer">العميل</label><input id="customer" maxlength="120" placeholder="Nom du client"></div><div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" maxlength="50" dir="ltr" placeholder="Téléphone"></div></div>
+<div class="grid"><div><label for="product">نوع الجهاز</label><input id="product" maxlength="120" placeholder="Produit"></div><div><label for="brand">العلامة</label><input id="brand" maxlength="120" placeholder="Marque"></div></div>
+<label for="model">الموديل</label><input id="model" maxlength="120" dir="ltr" placeholder="Modèle">
+<label for="issue">وصف العطل</label><textarea id="issue" maxlength="1000" placeholder="Description de panne"></textarea>
+<button id="saveButton" type="button" onclick="saveSAV()">💾 تسجيل الاستقبال</button>
+<button type="button" class="secondary" onclick="clearForm()">🧹 تفريغ البطاقة</button>
+<p id="status" class="status" role="status"></p>
+<button id="labelButton" type="button" onclick="showLabel()" hidden>🏷️ عرض ملصق QR للملف</button>
+</main>
+<section id="serialModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="serialHeading" hidden><div class="modal-inner">
+<div class="modal-top"><h3 id="serialHeading">الرقم التسلسلي</h3><button class="secondary" type="button" onclick="closeSerialModal()">✕ إغلاق</button></div>
+<p class="hint">اكتب الرقم أو امسحه ثم اضغط «اعتماد الرقم».</p>
+<label for="serialDraft">Serial Number</label><input id="serialDraft" dir="ltr" maxlength="120" autocomplete="off" placeholder="Serial Number">
+<div class="methods"><button type="button" onclick="scanQR()">📷 QR</button><button type="button" onclick="scanBarcode()">📊 Barcode</button><button type="button" onclick="showOCRPicker()">🔤 OCR</button></div>
+<div id="barcodePanel" class="panel" hidden><div id="barcodeReader"></div><p id="barcodeStatus" class="status"></p><label for="barcodeFile">أو اختر صورة للباركود</label><input id="barcodeFile" type="file" accept="image/*" onchange="readBarcodeImage(this)"><button type="button" class="secondary" onclick="stopBarcode()">إغلاق الماسح</button></div>
+<div id="ocrPanel" class="panel" hidden><label for="ocrFile">التقط صورة الرقم المطبوع</label><input id="ocrFile" type="file" accept="image/*" capture="environment" onchange="readSerialOCR(this)"><p id="ocrStatus" class="status"></p><details id="ocrDetails" hidden><summary>عرض النص المستخرج</summary><pre id="ocrText"></pre></details></div>
+<button type="button" onclick="applySerial()">✅ اعتماد الرقم</button>
+</div></section>
+<section id="caseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="caseHeading" hidden>
+ <div class="modal-inner">
+  <div class="modal-top"><h3 id="caseHeading">📂 بطاقة الصيانة</h3><button class="secondary" type="button" onclick="closeCaseDetail()">✕ رجوع</button></div>
+  <p class="hint" id="caseSubtitle">جاري تحميل البيانات...</p>
+  <div id="caseLoading" class="status" role="status"></div>
+  <button id="caseLabelButton" type="button" onclick="showLabel(activeCaseId)" hidden>🏷️ ملصق QR لهذا الملف</button>
+  <div id="caseContent" hidden>
+   <div class="result"><b id="caseNumber" dir="ltr"></b><div id="caseState"></div></div>
+   <div class="detail-grid" id="caseFields"></div>
+   <div class="detail-tabs" role="group" aria-label="أقسام بطاقة الصيانة">
+    <button type="button" class="secondary" onclick="showCaseTab('interventions')">🛠 التدخلات</button>
+    <button type="button" class="secondary" onclick="showCaseTab('movements')">🚚 الحركة</button>
+    <button type="button" class="secondary" onclick="showCaseTab('history')">🕘 السجل</button>
+   </div>
+   <div id="caseTabContent" class="panel"></div>
+  </div>
+  <button type="button" onclick="refreshCaseDetail()" class="secondary">↻ تحديث البطاقة</button>
+ </div>
+</section>
+<script>
+'use strict';
+const API='https://cad-sav-api-176972661374.europe-west1.run.app';
+const $=id=>document.getElementById(id), tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand()}
+let serialValue='', saving=false, lookupVersion=0, lookupResult=null, activeCaseId='', caseDetailData=null, caseTab='interventions';
+let interventionSaving=false, interventionRequestId=crypto.randomUUID();
+let lastSavedId = ''; // رقم الملف الذي نجح حفظه؛ يستخدم لعرض ملصق QR
+let requestId=crypto.randomUUID(), barcodeScanner=null,barcodeBusy=false,barcodeDetected=false, cameraStarting=false,ocrBusy=false;
+function message(text){if(tg?.showAlert && tg.initData)tg.showAlert(text);else alert(text)}
+function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.initData)tg.showConfirm(text,done);else done(confirm(text))})}
+function displaySerial(){$('serialTrigger').textContent=serialValue||'اضغط لإدخال الرقم أو مسحه...';$('serialTrigger').classList.toggle('has-value',!!serialValue)}
+function openSerialModal(){$('serialDraft').value=serialValue;$('serialModal').hidden=false;document.body.style.overflow='hidden'}
+async function closeSerialModal(){if(ocrBusy||cameraStarting){message('انتظر اكتمال القراءة');return}await stopBarcode();$('serialModal').hidden=true;$('ocrPanel').hidden=true;document.body.style.overflow=''}
+async function applySerial(){if(ocrBusy||cameraStarting||barcodeBusy){message('انتظر اكتمال القراءة');return}const value=$('serialDraft').value.trim();if(isSavId(value)){activeCaseId=value;await closeSerialModal();await openCaseDetail();return}if(!value){message('أدخل الرقم التسلسلي');return}const changed=serialValue!==value;serialValue=value;displaySerial();await closeSerialModal();if(changed){requestId=crypto.randomUUID();await lookupSerial()}}
+function isSavId(value){return /^(?:SAV_\d{6}_\d{3,}|SAV-[A-Z0-9-]{12,90})$/i.test(String(value||'').trim())}
+function scanQR(){if(!tg?.showScanQrPopup){message('ماسح QR غير متاح');return}tg.showScanQrPopup({text:'وجّه الكاميرا نحو QR Code'},value=>{if(!value)return false;tg.closeScanQrPopup?.();if(isSavId(value)){activeCaseId=value.trim();closeSerialModal().then(()=>openCaseDetail());}else $('serialDraft').value=value;return true})}
+function barcodeStatus(s){$('barcodeStatus').textContent=s}
+function barcodeReader(){if(barcodeScanner)return barcodeScanner;if(!window.Html5Qrcode)throw Error('مكتبة Barcode غير متاحة');const F=Html5QrcodeSupportedFormats;barcodeScanner=new Html5Qrcode('barcodeReader',{formatsToSupport:[F.CODE_128,F.CODE_39,F.CODE_93,F.EAN_13,F.EAN_8,F.UPC_A],verbose:false});return barcodeScanner}
+async function scanBarcode(){if(barcodeBusy||cameraStarting||barcodeScanner?.isScanning)return;$('ocrPanel').hidden=true;$('barcodePanel').hidden=false;barcodeBusy=true;cameraStarting=true;barcodeDetected=false;try{const s=barcodeReader();barcodeStatus('جارٍ تشغيل الكاميرا...');await s.start({facingMode:'environment'},{fps:12,qrbox:(w,h)=>({width:Math.min(300,Math.floor(w*.9)),height:Math.min(110,Math.floor(h*.4))}),aspectRatio:1.7778},async value=>{if(barcodeDetected||!value)return;barcodeDetected=true;$('serialDraft').value=value;await stopBarcode();message('تمت القراءة. راجع الرقم ثم اعتمده.')},()=>{});if(!barcodeDetected)barcodeStatus('وجّه الكاميرا نحو الباركود وانتظر القراءة.')}catch(e){barcodeStatus('تعذر تشغيل الكاميرا: '+e.message)}finally{cameraStarting=false;barcodeBusy=false}}
+async function stopBarcode(){const s=barcodeScanner;barcodeScanner=null;if(s){try{if(s.isScanning)await s.stop();s.clear()}catch(e){console.warn(e)}}barcodeBusy=false;$('barcodePanel').hidden=true}
+async function readBarcodeImage(input){const f=input.files?.[0];if(!f||barcodeBusy||cameraStarting)return;barcodeBusy=true;try{const s=barcodeReader();if(s.isScanning)await s.stop();barcodeStatus('جارٍ تحليل الصورة...');const value=await s.scanFile(f,false);$('serialDraft').value=value;await stopBarcode();message('تمت القراءة. راجع الرقم ثم اعتمده.')}catch(e){barcodeStatus('تعذرت القراءة. جرّب صورة أوضح.')}finally{barcodeBusy=false;input.value=''}}
+async function showOCRPicker(){if(ocrBusy||cameraStarting||barcodeBusy)return;await stopBarcode();$('ocrPanel').hidden=false;$('ocrFile').click()}
+async function readSerialOCR(input){const file=input.files?.[0];if(!file||ocrBusy)return;ocrBusy=true;input.disabled=true;let worker;const output=$('ocrText');$('ocrDetails').hidden=false;$('ocrStatus').textContent='جارٍ قراءة الصورة...';output.textContent='';try{worker=await Tesseract.createWorker('eng');await worker.setParameters({tessedit_pageseg_mode:'11'});const t=(await worker.recognize(file)).data.text||'';output.textContent=t.trim()||'لم يتم استخراج أي نص';const m=t.match(/(?:S\s*\/\s*N|Serial\s*(?:No\.?|Number)?)\s*[:\-]?\s*([A-Z0-9-]{8,})/i);if(m){$('serialDraft').value=m[1];$('ocrStatus').textContent='تم استخراج رقم محتمل؛ راجعه قبل الاعتماد.'}else $('ocrStatus').textContent='راجع النص المستخرج وأدخل الرقم الصحيح.'}catch(e){$('ocrStatus').textContent='تعذرت القراءة: '+e.message}finally{if(worker)try{await worker.terminate()}catch{}input.disabled=false;input.value='';ocrBusy=false}}
+async function apiCall(path,payload){const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:tg?.initData||'',...payload})});const x=await r.json();if(!r.ok||!x.ok)throw Error(x.error||'HTTP_'+r.status);return x}
+async function lookupSerial(){const v=++lookupVersion;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;$('lookupBox').hidden=false;$('lookupBox').className='result';$('lookupTitle').textContent='⏳ جارٍ البحث عن الجهاز...';$('lookupText').textContent='';try{const x=await apiCall('/api/lookup',{serial:serialValue});if(v!==lookupVersion)return;lookupResult=x;activeCaseId=x.kind==='OPEN_CASE'?(x.openCases?.[0]?.caseId||''):(x.lastCase?.caseId||'');$('openCaseButton').hidden=!activeCaseId;if(x.kind==='NEW_DEVICE'){$('lookupBox').classList.add('success');$('lookupTitle').textContent='✅ جهاز جديد';$('lookupText').textContent='لا توجد ملفات صيانة سابقة.'}else if(x.kind==='OPEN_CASE'){$('lookupBox').classList.add('warning');$('lookupTitle').textContent='⚠️ يوجد ملف صيانة مفتوح';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — الملف: ${x.openCases[0]?.caseId||'غير محدد'}`}else{$('lookupTitle').textContent='📋 صيانة سابقة';$('lookupText').textContent=`عدد الملفات السابقة: ${x.totalCases} — آخر ملف: ${x.lastCase?.caseId||'غير محدد'}`}}catch(e){if(v!==lookupVersion)return;$('lookupTitle').textContent='تعذر البحث';$('lookupText').textContent=e.message==='INVALID_TELEGRAM_AUTH'?'أعد فتح التطبيق من Telegram ثم جرّب.':'تحقق من الاتصال ثم اعتمد الرقم مجددًا.'}}
 
-const SHEET_ID = '1_ijxnCQH5yCw7zvbmJsz6fk1KfztaddvLsyi66cbgvQ';
-const BASE = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/`;
-const ORIGIN = 'https://bayit25.github.io';
-const auth = new GoogleAuth({scopes:['https://www.googleapis.com/auth/spreadsheets']});
-const MAX_AGE = 3600;
-
-function verifyTelegram(initData) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) throw new Error('TELEGRAM_SECRET_MISSING');
-  if (typeof initData !== 'string' || !initData || initData.length > 8192) return null;
-  const params = new URLSearchParams(initData);
-  const keys = [...params.keys()];
-  if (new Set(keys).size !== keys.length) return null;
-  const hash = params.get('hash');
-  const date = params.get('auth_date');
-  const rawUser = params.get('user');
-  if (!hash || !/^[a-f0-9]{64}$/i.test(hash) || !date || !/^\d+$/.test(date) || !rawUser) return null;
-  const now = Math.floor(Date.now() / 1000), issued = Number(date);
-  if (!Number.isSafeInteger(issued) || issued > now + 60 || now - issued > MAX_AGE) return null;
-  params.delete('hash');
-  const checked = [...params.entries()].sort(([a],[b]) => a < b ? -1 : a > b ? 1 : 0)
-    .map(([k,v]) => `${k}=${v}`).join('\n');
-  // Telegram: HMAC_SHA256(message=bot_token, key="WebAppData")
-  const key = createHmac('sha256', 'WebAppData').update(token).digest();
-  const expected = createHmac('sha256', key).update(checked).digest();
-  if (!timingSafeEqual(expected, Buffer.from(hash,'hex'))) return null;
+function detailField(label,value) {
+  const box=document.createElement('div');box.className='detail-field';
+  const head=document.createElement('small');head.textContent=label;
+  const text=document.createElement('div');text.textContent=value||'—';
+  box.append(head,text);return box;
+}
+function detailEvent(title, subtitle, description) {
+  const wrap=document.createElement('div');wrap.className='event';
+  const strong=document.createElement('strong');strong.textContent=title||'—';
+  const small=document.createElement('small');small.textContent=subtitle||'';
+  const body=document.createElement('div');body.textContent=description||'';
+  wrap.append(strong,small,body);return wrap;
+}
+async function openCaseDetail() {
+  if(!activeCaseId)return;
+  $('caseModal').hidden=false;document.body.style.overflow='hidden';
+  await refreshCaseDetail();
+}
+function closeCaseDetail() {
+  $('caseModal').hidden=true;
+  document.body.style.overflow='';
+}
+async function refreshCaseDetail() {
+  if(!activeCaseId)return;
+  const loading=$('caseLoading');loading.textContent='⏳ جارٍ تحميل بطاقة الصيانة...';
+  $('caseContent').hidden=true;
   try {
-    const user = JSON.parse(rawUser);
-    return Number.isSafeInteger(user.id) && user.id > 0 ? user : null;
-  } catch { return null; }
+    const data=await apiCall('/api/case-detail',{caseId:activeCaseId});
+    if($('caseModal').hidden)return;
+    caseDetailData=data;
+    const record=data.case;
+    $('caseNumber').textContent=record.Case_ID; $('caseLabelButton').hidden=false;
+    $('caseState').textContent='الحالة: '+(record.Status||'غير محددة');
+    $('caseSubtitle').textContent='ملف الصيانة — عرض المعلومات والتدخلات والحركات';
+    $('newInterventionButton').disabled=record.Status==='مغلق';
+    $('newInterventionButton').textContent=record.Status==='مغلق'?'🔒 ملف مغلق':'➕ تسجيل تدخل تقني';
+    const fields=$('caseFields');fields.replaceChildren();
+    [
+      ['الرقم التسلسلي',record.Serial_Number],['تاريخ الاستقبال',record.Created_At],
+      ['العميل',record.Customer_Name],['الهاتف',record.Customer_Phone],
+      ['الجهاز',record.Product],['العلامة',record.Brand],['الموديل',record.Model],
+      ['العطل',record.Issue_Description],['التقني المكلف',record.Assigned_Technician],
+      ['الموقع الحالي',record.Current_Location],['الأولوية',record.Priority],
+      ['تاريخ الإغلاق',record.Closed_At]
+    ].forEach(([label,value])=>fields.append(detailField(label,value)));
+    loading.textContent='';$('caseContent').hidden=false;
+    showCaseTab(caseTab);
+  } catch(e) {
+    loading.textContent='❌ تعذر تحميل بطاقة الصيانة: '+e.message;
+  }
 }
-
-// Algeria local month: determines the monthly numbering sequence.
-function monthKey(date) {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Algiers', year:'numeric', month:'2-digit' })
-      .formatToParts(date).map(p => [p.type,p.value])
-  );
-  return parts.year + parts.month;
-}
-
-function monthKeyOfIso(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : monthKey(date);
-}
-
-const pendingPattern = /^PENDING_[a-f0-9-]{36}$/i;
-const formattedPattern = /^SAV_\d{6}_\d{3,}$/;
-
-async function sheetUpdate(range, values) {
-  const client = await auth.getClient();
-  await client.request({
-    url: BASE + encodeURIComponent(range) + '?valueInputOption=RAW',
-    method:'PUT', data:{values}
+function showCaseTab(tab) {
+  caseTab=tab;
+  const area=$('caseTabContent');area.replaceChildren();
+  if(!caseDetailData)return;
+  const d=caseDetailData;
+  const rows=tab==='interventions'?d.interventions:tab==='movements'?d.movements:d.history;
+  if(!rows?.length){area.textContent=tab==='interventions'?'لم تُسجل تدخلات تقنية بعد.':tab==='movements'?'لم تُسجل حركة للجهاز بعد.':'لا توجد أحداث مسجلة في السجل.';return}
+  [...rows].reverse().forEach(r=>{
+    if(tab==='interventions')area.append(detailEvent(r.Task_Type||r.Intervention_ID, [r.Technician,r.Status,r.Started_At].filter(Boolean).join(' • '),[r.Diagnosis,r.Work_Performed,r.Result,r.Notes].filter(Boolean).join(' — ')));
+    else if(tab==='movements')area.append(detailEvent((r.From_Location||'؟')+' → '+(r.To_Location||'؟'),[r.Movement_Status,r.Sent_At,r.Received_At].filter(Boolean).join(' • '),r.Notes));
+    else area.append(detailEvent(r.Action||r.Entity,[r.Timestamp,r.Actor].filter(Boolean).join(' • '),[r.Field,r.Old_Value,r.New_Value,r.Notes].filter(Boolean).join(' — ')));
   });
 }
 
-async function ensureRequestColumn() {
-  const rows=await sheetGet('SAV_Dossiers!T1');
-  if(rows[0]?.[0] !== 'Request_ID') {
-    if(rows[0]?.[0]) throw new Error('REQUEST_COLUMN_CONFLICT');
-    await sheetUpdate('SAV_Dossiers!T1', [['Request_ID']]);
-  }
+function toggleInterventionForm(show) {
+  const form=$('interventionForm');
+  const next=typeof show==='boolean'?show:form.hidden;
+  if(next && caseDetailData?.case?.Status==='مغلق') {message('الملف مغلق؛ لا يمكن إضافة تدخل.');return;}
+  form.hidden=!next;
+  if(next)$('techName').focus();
 }
-
-// Append allocates a distinct physical row. Rank by row position within
-// the current month so concurrent receptions never obtain the same number.
-async function finalizePendingRequest(requestId, rowNumber, nowIso) {
-  const month = monthKeyOfIso(nowIso);
-  const rows = await sheetGet(`SAV_Dossiers!A1:T${rowNumber}`);
-  const prefix = `SAV_${month}_`;
-  let seq=0;
-  for(let index=1;index<rows.length;index++) {
-    const row=rows[index], id=String(row[0]||'');
-    if(monthKeyOfIso(String(row[1]||'')) !== month) continue;
-    if(id.startsWith(prefix) || pendingPattern.test(id)) seq++;
-  }
-  if(seq<1) throw new Error('NUMBER_SEQUENCE_FAILED');
-  const caseId=prefix+String(seq).padStart(3,'0');
-  await sheetUpdate(`SAV_Dossiers!A${rowNumber}`, [[caseId]]);
-  return caseId;
-}
-
-async function createNumberedCase(data) {
-  await ensureRequestColumn();
-  const requestId=data.requestId;
-  const rows=await sheetGet('SAV_Dossiers!A1:T5000');
-  // Idempotent retry: Request_ID persists even after Case_ID is finalized.
-  const found=rows.findIndex((row,index)=>index>0 && String(row[19]||'')===requestId);
-  if(found>0) {
-    const existing=rows[found], existingId=String(existing[0]||'');
-    if(!pendingPattern.test(existingId)) return {ok:true,caseId:existingId,duplicate:true};
-    const caseId=await finalizePendingRequest(requestId,found+1,String(existing[1]||''));
-    return {ok:true,caseId,duplicate:true};
-  }
-  const now=new Date().toISOString();
-  const provisional='PENDING_'+requestId;
-  const response=await sheetAppend('SAV_Dossiers!A:T',[
-    provisional,now,'',data.customer,data.phone,data.product,data.brand,
-    data.model,data.serial,data.issue,'','جديد','','','','','','',now,requestId
-  ]);
-  const updatedRange=response.data?.updates?.updatedRange || '';
-  const match=updatedRange.match(/![A-Z]+(\d+):/);
-  if(!match) throw new Error('APPEND_ROW_NOT_RETURNED');
-  const rowNumber=Number(match[1]);
-  const caseId=await finalizePendingRequest(requestId,rowNumber,now);
-  return {ok:true,caseId,status:'جديد'};
-}
-
-function trimmed(v, length=120) {
-  return typeof v === 'string' ? v.trim().slice(0,length) : '';
-}
-async function sheetGet(range) {
-  const client = await auth.getClient();
-  const r = await client.request({url:BASE + encodeURIComponent(range)});
-  return r.data.values || [];
-}
-async function sheetAppend(range, row) {
-  const client = await auth.getClient();
-  return client.request({
-    url: BASE + encodeURIComponent(range) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-    method: 'POST', data: {values:[row]}
-  });
-}
-const header = ['Case_ID','Created_At','Reception_Location','Customer_Name','Customer_Phone','Product','Brand','Model','Serial_Number','Issue_Description','Treatment_Type','Status','Priority','Assigned_Technician','Current_Location','Warranty_Status','Result','Closed_At','Updated_At'];
-
-async function readCases() {
-  const rows = await sheetGet('SAV_Dossiers!A1:S5000');
-  if (!rows.length || header.some((v,i) => rows[0][i] !== v)) throw new Error('SHEET_COLUMNS_CHANGED');
-  return rows.slice(1).filter(r => r[0] && !pendingPattern.test(String(r[0]))).map(r=>({
-    caseId:String(r[0]||''), createdAt:String(r[1]||''), customer:String(r[3]||''),
-    serial:String(r[8]||''), issue:String(r[9]||''), status:String(r[11]||'')
-  }));
-}
-
-const interventionHeader = ['Intervention_ID','Case_ID','Technician','Task_Type','Status','Diagnosis','Work_Performed','Result','Started_At','Completed_At','Notes'];
-const movementHeader = ['Movement_ID','Case_ID','From_Location','To_Location','Movement_Status','Sent_By','Sent_At','Received_By','Received_At','Notes'];
-const historyHeader = ['Event_ID','Timestamp','Case_ID','Actor','Source','Entity','Action','Field','Old_Value','New_Value','Notes'];
-
-async function readTable(name, expectedHeader) {
-  const rows = await sheetGet(`${name}!A1:${String.fromCharCode(64 + expectedHeader.length)}5000`);
-  if (!rows.length || expectedHeader.some((h,i) => rows[0][i] !== h)) throw new Error('SHEET_COLUMNS_CHANGED');
-  return rows.slice(1).filter(r => r[0]);
-}
-
-async function caseDetail(caseId) {
-  // Read-only case details, related technical interventions, device movements and timeline.
-  const [caseRows, interventionRows, movementRows, historyRows] = await Promise.all([
-    readTable('SAV_Dossiers', header),
-    readTable('SAV_Interventions', interventionHeader),
-    readTable('SAV_Mouvements', movementHeader),
-    readTable('SAV_Historique', historyHeader)
-  ]);
-  const record = caseRows.find(r => String(r[0]) === caseId);
-  if (!record) return null;
-  const toObject = (heads,row) => Object.fromEntries(heads.map((key,i) => [key,String(row[i] ?? '')]));
-  return {
-    ok:true,
-    case:toObject(header,record),
-    interventions:interventionRows.filter(r=>String(r[1])===caseId).map(r=>toObject(interventionHeader,r)).slice(-100),
-    movements:movementRows.filter(r=>String(r[1])===caseId).map(r=>toObject(movementHeader,r)).slice(-100),
-    history:historyRows.filter(r=>String(r[2])===caseId).map(r=>toObject(historyHeader,r)).slice(-100)
+async function saveIntervention() {
+  if(interventionSaving||!activeCaseId)return;
+  const payload={
+    caseId:activeCaseId,requestId:interventionRequestId,
+    technician:$('techName').value.trim(),diagnosis:$('techDiagnosis').value.trim(),
+    workPerformed:$('techWork').value.trim(),resultCode:$('techResult').value,
+    notes:$('techNotes').value.trim()
   };
-}
-
-
-// V1.07 — add-only technical interventions. Existing reception, scanning and IDs remain unchanged.
-const interventionResults = Object.freeze({
-  REPAIRED:{label:'تم الإصلاح',status:'جاهز للتسليم',taskStatus:'مكتمل'},
-  NOT_REPAIRED:{label:'لم يتم الإصلاح',status:'قيد الإصلاح',taskStatus:'مكتمل'},
-  WAITING_PART:{label:'انتظار قطعة',status:'في انتظار قطعة',taskStatus:'معلق'},
-  FOLLOW_UP:{label:'يحتاج متابعة',status:'قيد المتابعة',taskStatus:'معلق'}
-});
-const validCasePattern=/^(?:SAV-[A-Z0-9-]{12,90}|SAV_\d{6}_\d{3,})$/i;
-const validUuidPattern=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
-
-async function appendHistoryOnce(id,caseId,actor,action,field,oldValue,newValue,notes) {
-  const rows=await readTable('SAV_Historique',historyHeader);
-  if(rows.some(row=>String(row[0])===id))return;
-  await sheetAppend('SAV_Historique!A:K',[
-    id,new Date().toISOString(),caseId,actor,'Telegram Mini App','SAV_Dossiers',
-    action,field,oldValue,newValue,notes
-  ]);
-}
-
-async function recordIntervention(input,user) {
-  const caseId=trimmed(input.caseId,100);
-  const requestId=trimmed(input.requestId,64);
-  const technician=trimmed(input.technician,120);
-  const diagnosis=trimmed(input.diagnosis,2000);
-  const work=trimmed(input.workPerformed,2000);
-  const notes=trimmed(input.notes,1000);
-  const resultCode=trimmed(input.resultCode,32);
-  const selection=interventionResults[resultCode];
-  if(!validCasePattern.test(caseId)||!validUuidPattern.test(requestId)||!technician||!diagnosis||!work||!selection)
-    return {ok:false,error:'INVALID_INTERVENTION_DATA',httpStatus:400};
-  const dossierRows=await sheetGet('SAV_Dossiers!A1:T5000');
-  if(!dossierRows.length||header.some((h,i)=>dossierRows[0][i]!==h))throw Error('SHEET_COLUMNS_CHANGED');
-  const caseIndex=dossierRows.findIndex((row,i)=>i>0&&String(row[0])===caseId);
-  if(caseIndex<0)return {ok:false,error:'CASE_NOT_FOUND',httpStatus:404};
-  const dossier=dossierRows[caseIndex];
-  const actor=`${user.first_name||''} ${user.last_name||''}`.trim()+` [TG:${user.id}]`;
-  const interventionId=`INT_${requestId}`;
-  // Use the client-created UUID to recognize retries after a partial failure.
-  const previous=await readTable('SAV_Interventions',interventionHeader);
-  const recorded=previous.find(r=>String(r[0])===interventionId);
-  if(recorded && (String(recorded[1])!==caseId || String(recorded[2])!==technician || String(recorded[5])!==diagnosis || String(recorded[6])!==work || String(recorded[7])!==selection.label))
-    return {ok:false,error:'REQUEST_ID_CONFLICT',httpStatus:409};
-  if(!recorded && String(dossier[11]||'')==='مغلق')
-    return {ok:false,error:'CASE_CLOSED',httpStatus:409};
-  const originalStatus=String(dossier[11]||'');
-  if(!recorded){
-    const now=new Date().toISOString();
-    await sheetAppend('SAV_Interventions!A:K',[
-      interventionId,caseId,technician,'تدخل تقني',selection.taskStatus,
-      diagnosis,work,selection.label,now,selection.taskStatus==='مكتمل'?now:'',notes
-    ]);
+  if(!payload.technician||!payload.diagnosis||!payload.workPerformed||!payload.resultCode){
+    $('interventionStatus').textContent='أكمل التقني والتشخيص والعمل المنجز والنتيجة.';return;
   }
-  // In recovery mode, only change the dossier if no newer intervention exists.
-  const all=await readTable('SAV_Interventions',interventionHeader);
-  const forCase=all.filter(r=>String(r[1])===caseId);
-  const latest=forCase[forCase.length-1];
-  if(String(latest?.[0])===interventionId){
-    const statusBefore=String(dossier[11]||'');
-    const now=new Date().toISOString();
-    const client=await auth.getClient();
-    await client.request({
-      url:`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`,
-      method:'POST',data:{valueInputOption:'RAW',data:[
-        {range:`SAV_Dossiers!L${caseIndex+1}`,values:[[selection.status]]},
-        {range:`SAV_Dossiers!N${caseIndex+1}`,values:[[technician]]},
-        {range:`SAV_Dossiers!Q${caseIndex+1}`,values:[[selection.label]]},
-        {range:`SAV_Dossiers!S${caseIndex+1}`,values:[[now]]}
-      ]}
-    });
-    await appendHistoryOnce(`H_INT_${requestId}`,caseId,actor,'INTERVENTION_CREATED','Intervention_ID','',interventionId,`${selection.label} | ${notes}`);
-    await appendHistoryOnce(`H_STATUS_${requestId}`,caseId,actor,'STATUS_CHANGED','Status',recorded?'':statusBefore,selection.status,`Intervention ${interventionId}`);
-  } else {
-    // A newer technical entry superseded this retry; do not overwrite its status.
-    await appendHistoryOnce(`H_INT_${requestId}`,caseId,actor,'INTERVENTION_CREATED','Intervention_ID','',interventionId,`${selection.label} | ${notes}`);
-  }
-  return {ok:true,interventionId,caseId,status:selection.status,result:selection.label,duplicate:!!recorded};
-}
-
-function lookup(cases, serial) {
-  const matching = cases.filter(r=>r.serial.trim().toUpperCase() === serial.toUpperCase());
-  matching.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  const open = matching.filter(r=>r.status.trim() !== 'مغلق');
-  return {
-    ok:true, serial, kind: !matching.length?'NEW_DEVICE':open.length?'OPEN_CASE':'HISTORY_ONLY',
-    totalCases:matching.length, openCases:open.slice(0,5), lastCase:matching[0]||null
-  };
-}
-
-http('helloHttp', async (req,res)=>{
-  res.set('Cache-Control','no-store');
-  res.set('Content-Type','application/json; charset=utf-8');
-  const origin=req.get('Origin');
-  if (origin === ORIGIN) {
-    res.set('Access-Control-Allow-Origin',ORIGIN);
-    res.set('Vary','Origin');
-  }
-  if(req.method==='OPTIONS') {
-    if(origin !== ORIGIN) return res.status(403).json({ok:false,error:'ORIGIN_NOT_ALLOWED'});
-    res.set('Access-Control-Allow-Methods','POST, OPTIONS');
-    res.set('Access-Control-Allow-Headers','Content-Type');
-    return res.status(204).send();
-  }
-  if(req.method==='GET' && req.path==='/') return res.json({ok:true,service:'cad-sav-api',version:'1.07'});
-  if(req.method!=='POST' || !['/api/lookup','/api/cases','/api/case-detail','/api/interventions','/auth-check'].includes(req.path))
-    return res.status(405).json({ok:false,error:'METHOD_NOT_ALLOWED'});
-  if(origin && origin !== ORIGIN) return res.status(403).json({ok:false,error:'ORIGIN_NOT_ALLOWED'});
+  if(!tg?.initData){message('افتح التطبيق من Telegram');return;}
+  if(!await confirmAction('حفظ التدخل التقني لهذا الملف؟'))return;
+  interventionSaving=true;$('saveInterventionButton').disabled=true;
+  $('interventionStatus').textContent='⏳ جارٍ حفظ التدخل...';
   try {
-    const user=verifyTelegram(req.body?.initData);
-    if(!user) return res.status(401).json({ok:false,error:'INVALID_TELEGRAM_AUTH'});
-    if(req.path==='/auth-check') return res.json({ok:true,authenticated:true});
-    if(req.path==='/api/interventions') {
-      const result=await recordIntervention(req.body||{},user);
-      return res.status(result.httpStatus|| (result.duplicate?200:201)).json(result);
-    }
-    if(req.path==='/api/case-detail') {
-      const caseId=trimmed(req.body?.caseId,100);
-      if (!/^(?:SAV-[A-Z0-9-]{12,90}|SAV_\d{6}_\d{3,})$/i.test(caseId))
-        return res.status(400).json({ok:false,error:'INVALID_CASE_ID'});
-      const detail=await caseDetail(caseId);
-      return detail ? res.json(detail) : res.status(404).json({ok:false,error:'CASE_NOT_FOUND'});
-    }
-    const serial=trimmed(req.body?.serial);
-    if(!serial || serial.length > 120) return res.status(400).json({ok:false,error:'INVALID_SERIAL'});
-    const cases=await readCases();
-    if(req.path==='/api/lookup') return res.json(lookup(cases,serial));
+    const saved=await apiCall('/api/interventions',payload);
+    interventionRequestId=crypto.randomUUID();
+    ['techDiagnosis','techWork','techNotes'].forEach(id=>$(id).value='');
+    $('techResult').value='';
+    $('interventionStatus').textContent='✅ تم حفظ التدخل: '+saved.interventionId;
+    $('interventionForm').hidden=true;
+    caseTab='interventions';
+    await refreshCaseDetail();
+  } catch(e) {
+    $('interventionStatus').textContent='❌ تعذر تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تغيير المدخلات.';
+  } finally {interventionSaving=false;$('saveInterventionButton').disabled=false;}
+}
 
-    const issue=trimmed(req.body?.issue,1000);
-    const customer=trimmed(req.body?.customer);
-    const phone=trimmed(req.body?.phone,50);
-    const product=trimmed(req.body?.product);
-    const brand=trimmed(req.body?.brand);
-    const model=trimmed(req.body?.model);
-    const requestId=trimmed(req.body?.requestId,64);
-    if(!issue || !/^[a-f0-9-]{36}$/i.test(requestId))
-      return res.status(400).json({ok:false,error:'INVALID_CASE_DATA'});
-    const result=await createNumberedCase({requestId,serial,issue,customer,phone,product,brand,model});
-    return res.status(result.duplicate?200:201).json(result);
-  } catch(err) {
-    console.error('CAD SAV API error:',err.message);
-    return res.status(500).json({ok:false,error:'SERVER_ERROR'});
-  }
-});
+async function saveSAV(){if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!serial||!issue){message('أدخل الرقم التسلسلي ووصف العطل');return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد استقبال الجهاز برقم:\n'+serial))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serial,issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; $('labelButton').hidden=false;$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
+async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue'].forEach(k=>$(k).value='');$('lookupBox').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false;lastSavedId='';$('labelButton').hidden=true}
+
+let labelFor='';
+function showLabel(id) {
+  const caseId=id || lastSavedId;
+  if(!caseId || !isSavId(caseId)) {message('لم يتم تحديد رقم ملف صالح');return;}
+  if(!window.QRCode){message('تعذر تحميل مكتبة QR');return;}
+  labelFor=caseId;
+  $('labelCaseId').textContent=caseId;
+  $('labelQr').replaceChildren();
+  new QRCode($('labelQr'),{text:caseId,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
+  $('labelModal').hidden=false;
+  document.body.style.overflow='hidden';
+}
+function closeLabel(){ $('labelModal').hidden=true;document.body.style.overflow=''; }
+function downloadLabel(){
+  const qr=$('labelQr').querySelector('canvas');
+  if(!qr){message('الصورة لم تجهز بعد');return;}
+  const canvas=document.createElement('canvas');
+  canvas.width=600;canvas.height=420;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,600,420);
+  ctx.fillStyle='#111';ctx.textAlign='center';
+  ctx.font='bold 25px Arial';ctx.fillText('CAD SAV',300,36);
+  ctx.drawImage(qr,195,45,210,210);
+  ctx.font='bold 21px Arial';ctx.fillText(labelFor,300,295);
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+  a.download=labelFor+'.png';a.click();
+}
+
+displaySerial();
+</script>
+<section id="labelModal" class="modal" role="dialog" aria-modal="true" hidden>
+ <div class="modal-inner">
+  <div class="modal-top"><h3>🏷️ ملصق الجهاز</h3><button type="button" class="secondary" onclick="closeLabel()">✕ رجوع</button></div>
+  <div class="label-preview" id="printLabel">
+   <small>CAD SAV</small>
+   <div id="labelQr"></div>
+   <strong id="labelCaseId"></strong>
+  </div>
+  <p class="hint">الـ QR يحتوي رقم ملف الصيانة فقط. يمكنك طباعته أو حفظه صورة.</p>
+  <button type="button" onclick="window.print()">🖨️ طباعة الملصق</button>
+  <button type="button" class="secondary" onclick="downloadLabel()">💾 حفظ صورة QR</button>
+ </div>
+</section>
+</body>
+</html>
