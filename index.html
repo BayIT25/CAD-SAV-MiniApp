@@ -116,7 +116,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 <div id="fieldAddressBox" hidden><label for="customerAddress">عنوان تدخل الزبون</label><textarea id="customerAddress" maxlength="500" placeholder="عنوان المنزل أو المقر"></textarea></div>
 <label for="issue">وصف العطل</label><textarea id="issue" maxlength="1000" placeholder="Description de panne"></textarea>
 <label for="serialTrigger">الرقم التسلسلي (اختياري للتدخل الخارجي)</label><button type="button" id="serialTrigger" class="serial-trigger" onclick="openSerialModal()">اضغط لإدخال الرقم أو مسحه...</button>
-<div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button><div id="newDeviceHint" hidden><p class="hint">جهاز جديد: يجب إنشاء ملف صيانة أولًا قبل فتح بطاقته.</p><button type="button" class="secondary" onclick="createNewDeviceCard()">➕ إنشاء بطاقة لهذا الجهاز</button></div></div>
+<div id="lookupBox" class="result" hidden><b id="lookupTitle"></b><div class="status" id="lookupText"></div><button type="button" id="openCaseButton" onclick="openCaseDetail()" hidden>📂 فتح بطاقة الصيانة</button><div id="newDeviceHint" hidden><p class="hint">جهاز جديد: سيتم إنشاء بطاقة صيانة مباشرة عند تسجيل الاستقبال.</p></div></div>
 <div class="grid"><div><label for="product">نوع الجهاز</label><input id="product" maxlength="120" placeholder="Produit"></div><div><label for="brand">العلامة</label><input id="brand" maxlength="120" placeholder="Marque"></div></div>
 <label for="model">الموديل</label><input id="model" maxlength="120" dir="ltr" placeholder="Modèle">
 <section id="fieldDiagnosisBox" hidden><label for="fieldDiagnosis">🩺 التشخيص</label><textarea id="fieldDiagnosis" maxlength="2000" placeholder="تشخيص العطل والملاحظات التقنية"></textarea></section>
@@ -146,9 +146,15 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
   <div id="caseContent" hidden>
    <div class="result"><b id="caseNumber" dir="ltr"></b><div id="caseState"></div></div>
    <nav class="detail-tabs four-tabs" role="tablist" aria-label="أقسام بطاقة الصيانة"><button type="button" id="tabInfo" onclick="showCaseTab('info')">معلومات الجهاز</button><button type="button" id="tabInterventions" onclick="showCaseTab('interventions')">التشخيصات</button><button type="button" id="tabMovements" onclick="showCaseTab('movements')">الحركة</button><button type="button" id="tabHistory" onclick="showCaseTab('history')">السجل</button></nav>
-   <div id="infoPane" class="case-pane"><div class="detail-grid" id="caseFields"></div></div>
+   <div id="infoPane" class="case-pane"><div class="detail-grid" id="caseFields"></div>
+   <section id="shopEditPanel" class="panel" hidden><h3>✏️ تعديل معلومات الجهاز</h3>
+   <div class="grid"><div><label for="shopEditCustomer">العميل</label><input id="shopEditCustomer"></div><div><label for="shopEditPhone">الهاتف</label><input id="shopEditPhone"></div></div>
+   <div class="grid"><div><label for="shopEditProduct">نوع الجهاز</label><input id="shopEditProduct"></div><div><label for="shopEditBrand">العلامة</label><input id="shopEditBrand"></div></div>
+   <label for="shopEditModel">الموديل</label><input id="shopEditModel"><label for="shopEditSerial">الرقم التسلسلي</label><input id="shopEditSerial" dir="ltr">
+   <label for="shopEditIssue">وصف العطل</label><textarea id="shopEditIssue"></textarea>
+   <button type="button" id="shopEditSave" onclick="saveShopEdit()">💾 حفظ التعديلات</button><p id="shopEditStatus" class="status"></p></section></div>
    <div id="interventionsPane" class="case-pane" hidden>
-   <section id="assignmentPanel" class="panel" hidden><h3>👨‍🔧 إحالة إلى تقني خارجي</h3><label for="assignmentUser">Telegram User ID للتقني</label><input id="assignmentUser" inputmode="numeric" dir="ltr" placeholder="رقم حساب التقني"><label for="assignmentNotes">ملاحظات الإحالة</label><textarea id="assignmentNotes" maxlength="1000"></textarea><button type="button" id="assignmentSave" onclick="saveAssignment()">إحالة الطلب</button><p id="assignmentStatus" class="status"></p><div id="assignmentList"></div></section>
+   <section id="assignmentPanel" class="panel" hidden><h3>👨‍🔧 إحالة إلى تقني داخلي</h3><label for="assignmentUser">التقني المتاح في المحطة الحالية</label><select id="assignmentUser"><option value="">— دون إحالة —</option></select><label for="assignmentNotes">ملاحظات الإحالة</label><textarea id="assignmentNotes" maxlength="1000"></textarea><button type="button" id="assignmentSave" onclick="saveAssignment()">إحالة الطلب</button><p id="assignmentStatus" class="status"></p><div id="assignmentList"></div></section>
    <button id="newInterventionButton" type="button" onclick="toggleInterventionForm()">➕ تسجيل تدخل تقني</button>
    <section id="interventionForm" class="panel" hidden>
     <h3>🛠 تسجيل تدخل تقني</h3>
@@ -187,7 +193,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.13.0';
+const APP_VERSION='V1.13.1';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -388,11 +394,14 @@ async function refreshCaseDetail() {
     const record=data.case;
      const permissions=data.permissions||{};
      $('newInterventionButton').hidden=!permissions.intervene;
-     $('assignmentPanel').hidden=!permissions.assign;
+     $('assignmentPanel').hidden=!permissions.assign||record.Service_Mode==='FIELD';
+     $('shopEditPanel').hidden=record.Service_Mode==='FIELD'||!permissions.edit;
+     if(!$('shopEditPanel').hidden)fillShopEdit(record);
+     if(!$('assignmentPanel').hidden)loadShopTechnicians().catch(e=>$('assignmentStatus').textContent='❌ '+e.message);
      $('assignmentList').replaceChildren();
      (data.assignments||[]).forEach(a=>$('assignmentList').append(detailEvent(a.technicianId,a.status,readableDate(a.at))));
      $('movementPanel').hidden=record.Service_Mode==='FIELD';
-    $('caseNumber').textContent=record.Case_ID; $('caseLabelButton').hidden=false;
+    $('caseNumber').textContent=record.Case_ID; $('caseLabelButton').hidden=record.Service_Mode==='FIELD';
     $('caseState').textContent='الحالة: '+(record.Status||'غير محددة');
     $('caseSubtitle').textContent='ملف الصيانة — عرض المعلومات والتدخلات والحركات';
     $('newInterventionButton').disabled=record.Status==='مغلق';
@@ -402,7 +411,7 @@ async function refreshCaseDetail() {
       ['نوع الطلب',record.Service_Mode==='FIELD'?'تدخل لدى الزبون':'جهاز مستلَم'],['تاريخ الطلب',record.Request_Date],['تاريخ إنشاء البطاقة',readableDate(record.Created_At)],['تاريخ التدخل',record.Intervention_Date],['عنوان التدخل',record.Customer_Address],['الرقم التسلسلي',record.Serial_Number],['تاريخ الاستقبال',readableDate(record.Created_At)],
       ['العميل',record.Customer_Name],['الهاتف',record.Customer_Phone],
       ['الجهاز',record.Product],['العلامة',record.Brand],['الموديل',record.Model],
-      ['العطل',record.Issue_Description],['التقني المكلف',record.Assigned_Technician],
+      ['العطل',record.Issue_Description],['التقني المكلف',(data.assignments||[]).filter(a=>a.status==='ACTIVE').slice(-1)[0]?.technicianId||record.Assigned_Technician],
       ['الموقع الحالي',record.Current_Location],['الأولوية',record.Priority],
       ['تاريخ الإغلاق',record.Closed_At?readableDate(record.Closed_At):'']
     ].forEach(([label,value])=>fields.append(detailField(label,value)));
@@ -523,12 +532,36 @@ async function saveIntervention() {
   } finally {interventionSaving=false;$('saveInterventionButton').disabled=false;}
 }
 
+async function loadShopTechnicians(){
+ const res=await apiCall('/api/shop-technicians',{caseId:activeCaseId});
+ const sel=$('assignmentUser'),current=(caseDetailData?.assignments||[]).filter(a=>a.status==='ACTIVE').slice(-1)[0]?.technicianId||'';
+ sel.replaceChildren(new Option('— دون إحالة —',''));
+ for(const t of res.technicians||[])sel.add(new Option(t.name,t.id));
+ sel.value=[...sel.options].some(o=>o.value===current)?current:'';
+ if(!(res.technicians||[]).length)$('assignmentStatus').textContent='لا يوجد تقني داخلي مفعل في هذه المحطة.';
+}
 async function saveAssignment(){
- if(assignmentBusy||!caseDetailData?.permissions?.assign)return;
- const technicianUserId=$('assignmentUser').value.trim();if(!/^\d{1,20}$/.test(technicianUserId)){message('أدخل Telegram User ID الرقمي');return;}
- if(!await confirmAction('إحالة الطلب إلى هذا التقني؟'))return;
+ if(assignmentBusy||!caseDetailData?.permissions?.assign||caseDetailData?.case?.Service_Mode!=='IN_SHOP')return;
+ const technicianUserId=$('assignmentUser').value;
+ if(technicianUserId&&!/^\d{1,20}$/.test(technicianUserId)){message('اختر التقني من القائمة');return;}
+ if(!await confirmAction(technicianUserId?'تأكيد إحالة الجهاز إلى التقني المحدد؟':'إلغاء إحالة الجهاز الحالية؟'))return;
  assignmentBusy=true;$('assignmentSave').disabled=true;
- try{await apiCall('/api/assignments',{caseId:activeCaseId,technicianUserId,notes:$('assignmentNotes').value.trim(),requestId:assignmentRequestId});assignmentRequestId=crypto.randomUUID();$('assignmentStatus').textContent='✅ تمت الإحالة';await refreshCaseDetail();}catch(e){$('assignmentStatus').textContent='❌ '+e.message;}finally{assignmentBusy=false;$('assignmentSave').disabled=false;}
+ try{await apiCall('/api/assignments',{caseId:activeCaseId,technicianUserId,notes:$('assignmentNotes').value.trim(),requestId:assignmentRequestId});assignmentRequestId=crypto.randomUUID();$('assignmentStatus').textContent='✅ تم تحديث الإحالة';await refreshCaseDetail();}
+ catch(e){$('assignmentStatus').textContent='❌ '+e.message;}
+ finally{assignmentBusy=false;$('assignmentSave').disabled=false;}
+}
+function fillShopEdit(r){
+ for(const [key,col] of Object.entries({Customer:'Customer_Name',Phone:'Customer_Phone',Product:'Product',Brand:'Brand',Model:'Model',Serial:'Serial_Number',Issue:'Issue_Description'}))$('shopEdit'+key).value=r[col]||'';
+ $('shopEditStatus').textContent='';
+}
+async function saveShopEdit(){
+ const r=caseDetailData?.case;if(!r||caseDetailData?.permissions?.edit!==true)return;
+ const data={caseId:activeCaseId,expectedUpdatedAt:r.Updated_At};
+ for(const key of ['Customer','Phone','Product','Brand','Model','Serial','Issue'])data[key.toLowerCase()]=$('shopEdit'+key).value.trim();
+ const btn=$('shopEditSave');btn.disabled=true;
+ try{await apiCall('/api/shop-update',data);$('shopEditStatus').textContent='✅ تم حفظ معلومات الجهاز';await refreshCaseDetail();}
+ catch(e){$('shopEditStatus').textContent='❌ '+e.message;}
+ finally{btn.disabled=false;}
 }
 
 let fieldAssignmentId='',fieldAssignmentChanged=false,fieldTechniciansLoaded=false;
@@ -630,7 +663,7 @@ async function saveFieldEdit(){
  finally{saving=false;$('saveButton').disabled=false;}
 }
 
-async function saveSAV(){if(editingFieldCaseId)return saveFieldEdit();if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!issue||(!serial&&$('serviceMode').value!=='FIELD')){message('أدخل وصف العطل والرقم التسلسلي للأجهزة المستلمة');return}if($('serviceMode').value==='FIELD'&&!$('customerAddress').value.trim()){$('status').textContent='❌ عنوان تدخل الزبون مطلوب قبل الحفظ';$('customerAddress').focus();return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد تسجيل طلب الصيانة؟'))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serviceMode:$('serviceMode').value,receptionLocation:$('receptionLocation').value,customerAddress:$('customerAddress').value.trim(),requestDate:$('serviceMode').value==='FIELD'?($('requestDate').value||localToday()):'',interventionDate:$('serviceMode').value==='FIELD'?$('interventionDate').value:'',serial:serial||('FIELD-'+requestId),issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; activeCaseId=result.caseId; if($('serviceMode').value==='FIELD'){$('lookupBox').hidden=true;$('labelButton').hidden=true;$('openCaseButton').hidden=true;$('status').textContent='✅ تم حفظ طلب التدخل: '+result.caseId;const chosenTechnician=appMe?.role==='SAV_MANAGER'?$('fieldAssignTechnician').value:'';await openFieldEdit(result.caseId);let assignWarning='';if(chosenTechnician){$('fieldAssignTechnician').value=chosenTechnician;try{await assignFromField(result.caseId);}catch(assignError){assignWarning=' — لم تكتمل إحالة التقني: '+assignError.message;}} $('status').textContent='✅ تم حفظ طلب التدخل: '+result.caseId+assignWarning;$('saveButton').disabled=false;}else{$('openCaseButton').hidden=false;$('newDeviceHint').hidden=true;$('lookupBox').hidden=false;$('lookupBox').className='result success';$('lookupTitle').textContent='✅ الملف جاهز';$('lookupText').textContent='تم إنشاء بطاقة الصيانة '+result.caseId;$('labelButton').hidden=false;}if($('serviceMode').value!=='FIELD')$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
+async function saveSAV(){if(editingFieldCaseId)return saveFieldEdit();if(saving)return;const serial=serialValue.trim(),issue=$('issue').value.trim();if(!issue||(!serial&&$('serviceMode').value!=='FIELD')){message('أدخل وصف العطل والرقم التسلسلي للأجهزة المستلمة');return}if($('serviceMode').value==='FIELD'&&!$('customerAddress').value.trim()){$('status').textContent='❌ عنوان تدخل الزبون مطلوب قبل الحفظ';$('customerAddress').focus();return}if(!tg?.initData){message('افتح التطبيق من Telegram');return}saving=true;$('saveButton').disabled=true;try{if(lookupResult?.kind==='OPEN_CASE'){if(!await confirmAction('يوجد ملف مفتوح لنفس الجهاز. هل تريد إنشاء ملف آخر؟'))return}if(!await confirmAction('تأكيد تسجيل طلب الصيانة؟'))return;$('status').textContent='⏳ جارٍ حفظ ملف الصيانة...';const result=await apiCall('/api/cases',{requestId,serviceMode:$('serviceMode').value,receptionLocation:$('receptionLocation').value,customerAddress:$('customerAddress').value.trim(),requestDate:$('serviceMode').value==='FIELD'?($('requestDate').value||localToday()):'',interventionDate:$('serviceMode').value==='FIELD'?$('interventionDate').value:'',serial:serial||('FIELD-'+requestId),issue,customer:$('customer').value.trim(),phone:$('phone').value.trim(),product:$('product').value.trim(),brand:$('brand').value.trim(),model:$('model').value.trim()});$('status').textContent='✅ تم تسجيل ملف SAV: '+result.caseId+(result.duplicate?' (مسجل مسبقًا)':''); lastSavedId=result.caseId; activeCaseId=result.caseId; if($('serviceMode').value==='FIELD'){$('lookupBox').hidden=true;$('labelButton').hidden=true;$('openCaseButton').hidden=true;$('status').textContent='✅ تم حفظ طلب التدخل: '+result.caseId;const chosenTechnician=appMe?.role==='SAV_MANAGER'?$('fieldAssignTechnician').value:'';await openFieldEdit(result.caseId);let assignWarning='';if(chosenTechnician){$('fieldAssignTechnician').value=chosenTechnician;try{await assignFromField(result.caseId);}catch(assignError){assignWarning=' — لم تكتمل إحالة التقني: '+assignError.message;}} $('status').textContent='✅ تم حفظ طلب التدخل: '+result.caseId+assignWarning;$('saveButton').disabled=false;}else{$('openCaseButton').hidden=false;$('newDeviceHint').hidden=true;$('lookupBox').hidden=false;$('lookupBox').className='result success';$('lookupTitle').textContent='✅ الملف جاهز';$('lookupText').textContent='تم إنشاء بطاقة الصيانة '+result.caseId;$('labelButton').hidden=false;await openCaseDetail();}if($('serviceMode').value!=='FIELD')$('saveButton').disabled=true;lookupResult=null}catch(e){$('status').textContent='❌ لم يتم تأكيد الحفظ: '+e.message+' — أعد المحاولة دون تفريغ البطاقة.'}finally{saving=false;if(!$('status').textContent.startsWith('✅'))$('saveButton').disabled=false}}
 async function clearForm(){if(saving||ocrBusy||cameraStarting)return;if(!await confirmAction('تفريغ بطاقة الاستقبال؟'))return;await stopBarcode();serialValue='';requestId=crypto.randomUUID();lookupVersion++;lookupResult=null;activeCaseId='';$('openCaseButton').hidden=true;displaySerial();$('serialDraft').value='';['customer','phone','product','brand','model','issue','customerAddress'].forEach(k=>$(k).value='');$('serviceMode').value='IN_SHOP';serviceModeChanged();$('lookupBox').hidden=true;$('newDeviceHint').hidden=true;$('status').textContent='';$('ocrStatus').textContent='';$('ocrText').textContent='';$('ocrDetails').hidden=true;$('saveButton').disabled=false;lastSavedId='';$('labelButton').hidden=true}
 
 let labelFor='';
@@ -678,7 +711,7 @@ async function checkAccessAgain(){
     $('homeUserName').textContent=ctx.name||[tg?.initDataUnsafe?.user?.first_name,tg?.initDataUnsafe?.user?.last_name].filter(Boolean).join(' ')||'مستخدم CAD';
     $('homeUserRole').textContent=ROLE_LABELS[ctx.role]||ctx.role||'غير محدد';
     $('saveButton').hidden=!['SAV_MANAGER','BRANCH_MANAGER','EXTERNAL_TECH','INTERNAL_TECH'].includes(ctx.role);
-    if(ctx.role==='SAV_MANAGER'){$('receptionLocationBox').hidden=false;setLocationOptions('receptionLocation',(ctx.locations||[]).filter(l=>l.type==='BRANCH'));$('managerAccessPanel').hidden=false;loadAccessRequests();}
+    if(ctx.role==='SAV_MANAGER'){$('receptionLocationBox').hidden=true;$('managerAccessPanel').hidden=false;loadAccessRequests();}
   }catch(e){
     if(e.message==='USER_NOT_AUTHORIZED'){
        denyHome('يمكنك طلب الدخول أو متابعة حالة طلبك.');
