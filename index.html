@@ -38,7 +38,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 
 /* V1.12.8.2 — responsive desktop; small-screen layout remains unchanged. */
 @media (min-width: 760px){
-  main#appMain,.modal-inner{max-width:1000px;width:min(100%,1000px)}
+  main#appMain,.modal-inner{max-width:1120px;width:100%}
   body{padding-inline:clamp(16px,3vw,40px)}
   .home-screen{max-width:760px;margin-inline:auto}
   #fieldDirectory>.panel,#serviceScreen{width:100%}
@@ -67,6 +67,9 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 .shop-filters select{min-width:0;font-size:12px;padding:9px 6px}
 .shop-table td{white-space:normal;min-width:75px}.shop-table td:first-child{direction:ltr;text-align:right;white-space:nowrap}
 @media(max-width:540px){.shop-filters{grid-template-columns:1fr 1fr}.shop-filters select:last-child{grid-column:1/-1}}
+/* Desktop: use the available Telegram webview width; the host controls its outer window. */
+@media(min-width:760px){main#appMain,.modal-inner{max-width:1120px;width:100%}#singleShopCard .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-log-title{font-weight:800}}
+.shop-log-title{display:block;font-weight:800;font-size:14px;margin-bottom:7px;direction:ltr;text-align:right}
 </style>
 </head>
 <body>
@@ -107,7 +110,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
  <div class="table-scroll"><table class="field-table"><thead><tr><th>رقم التدخل</th><th>تاريخ الطلب</th><th>التقني</th><th>الحالة</th><th>استمارة</th></tr></thead><tbody id="fieldRows"></tbody></table></div>
  </div>
 </section>
-<section id="serviceScreen" hidden><div class="page-heading"><button type="button" class="secondary back-small" onclick="backHome()">← العودة</button><div><h2 id="serviceHeading">🔧 إصلاح أجهزة</h2><span class="hint" id="serviceCaption">بحث واستقبال الأجهزة</span></div></div>
+<section id="serviceScreen" hidden><div class="page-heading"><button type="button" class="secondary back-small" onclick="backHome()">← العودة</button><div><h2 id="serviceHeading">🔧 استقبال جهاز جديد</h2><span class="hint" id="serviceCaption">بحث واستقبال الأجهزة</span></div></div>
 <div class="version">CAD SAV · <span data-app-version></span></div><div id="fieldCaseMeta" class="field-case-meta" hidden><strong id="fieldCaseId" dir="rtl"></strong><div class="field-meta-dates"><small id="fieldCreatedAt" class="hint"></small><small id="fieldLastUpdate" class="hint"></small></div></div>
 <label for="serviceMode" hidden>نوع طلب الصيانة</label><select id="serviceMode" hidden onchange="serviceModeChanged()"><option value="IN_SHOP">جهاز مستلَم لدى CAD</option><option value="FIELD">تدخل لدى الزبون</option></select>
 <div id="receptionLocationBox" hidden><label for="receptionLocation">فرع استقبال الطلب</label><select id="receptionLocation"></select></div>
@@ -150,7 +153,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
     <div class="grid"><div><label>الموديل</label><input id="singleModel"></div><div><label>الرقم التسلسلي</label><input id="singleSerial" dir="ltr"></div></div>
     <label>العطل المصرح به</label><textarea id="singleIssue"></textarea>
     <div class="grid"><div><label>الموقع الحالي</label><select id="singleLocation"></select></div><div><label>التقني المكلف</label><select id="singleTech"></select></div></div>
-    <label>الحالة</label><select id="singleStatus"><option value="جديد">جديد</option><option value="قيد الإصلاح">قيد الإصلاح</option><option value="في انتظار قطعة">في انتظار قطعة</option><option value="قيد المتابعة">قيد المتابعة</option><option value="جاهز للتسليم">جاهز للتسليم</option></select>
+    <label>الحالة</label><select id="singleStatus"><option value="طلب جديد">طلب جديد</option><option value="قيد الصيانة">قيد الصيانة</option><option value="جاهز للتسليم">جاهز للتسليم</option><option value="تم التسليم">تم التسليم</option><option value="جهاز تالف">جهاز تالف</option></select>
     <label>التشخيص الحالي</label><textarea id="singleDiagnosis" placeholder="أدخل التشخيص"></textarea>
     <button type="button" id="singleSave" onclick="saveSingleShopCard()">💾 حفظ التعديلات</button><p class="status" id="singleSaveStatus"></p>
     <div class="grid"><button type="button" class="secondary" onclick="toggleSingleLog('history')">🕘 سجل التعديلات</button><button type="button" class="secondary" onclick="toggleSingleLog('diagnosis')">🛠 سجل التشخيصات</button></div>
@@ -206,7 +209,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.13.2';
+const APP_VERSION='V1.13.3';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -223,7 +226,7 @@ function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.
 const ROLE_LABELS={SAV_MANAGER:'مسؤول المصلحة',BRANCH_MANAGER:'مسؤول الفرع',WAREHOUSE_MANAGER:'مسؤول المستودع',INTERNAL_TECH:'التقني الداخلي',EXTERNAL_TECH:'التقني الخارجي'};
 let fieldData=[],fieldOpenFromList=false,editingFieldCaseId='',editingFieldUpdatedAt='';
 let shopData=[],shopOpenFromList=false,shopListVersion=0;
-function openService(mode){$('homeScreen').hidden=true;$('serviceScreen').hidden=false;$('serviceMode').value=mode;$('serviceHeading').textContent=mode==='FIELD'?'تدخلات خارجية':'إصلاح أجهزة';$('serviceCaption').textContent=mode==='FIELD'?'طلبات الصيانة لدى الزبائن':'استقبال الأجهزة والبحث عن ملفات الصيانة';serviceModeChanged();window.scrollTo(0,0);}
+function openService(mode){$('homeScreen').hidden=true;$('serviceScreen').hidden=false;$('serviceMode').value=mode;$('serviceHeading').textContent=mode==='FIELD'?'تدخلات خارجية':'🔧 استقبال جهاز جديد';$('serviceCaption').textContent=mode==='FIELD'?'طلبات الصيانة لدى الزبائن':'استقبال الأجهزة والبحث عن ملفات الصيانة';serviceModeChanged();window.scrollTo(0,0);}
 function backHome(){if(saving)return;const field=fieldOpenFromList,shop=shopOpenFromList;editingFieldCaseId='';editingFieldUpdatedAt='';clearFieldDraft();$('serviceScreen').hidden=true;if(field){$('fieldDirectory').hidden=false;fieldOpenFromList=false;loadFieldDirectory();}else if(shop){$('shopDirectory').hidden=false;shopOpenFromList=false;loadShopDirectory();}else $('homeScreen').hidden=false;window.scrollTo(0,0);}
 
 // V1.13 — read-only directory and navigation into existing electronic case card.
@@ -454,7 +457,7 @@ async function populateSingleShopCard(data){
  const loc=$('singleLocation');loc.replaceChildren();for(const l of appMe?.locations||[])loc.add(new Option(l.name,l.id));
  if(![...loc.options].some(o=>o.value===r.Current_Location))loc.add(new Option(r.Current_Location||'غير محدد',r.Current_Location||''));loc.value=r.Current_Location||'';
  loc.disabled=!p.move;
- $('singleStatus').value=r.Status||'جديد';if(!$('singleStatus').value)$('singleStatus').add(new Option(r.Status,r.Status));
+ $('singleStatus').value=r.Status||'طلب جديد';if(!$('singleStatus').value)$('singleStatus').add(new Option(r.Status,r.Status));
  const tech=$('singleTech');tech.replaceChildren(new Option('— دون إحالة —',''));
  const current=String(r.Assigned_Technician||'');
  try{const result=await apiCall('/api/shop-technicians',{caseId:activeCaseId});for(const t of result.technicians||[])tech.add(new Option(t.name,t.id));}catch(e){console.warn(e.message)}
@@ -475,17 +478,29 @@ async function saveSingleShopCard(){
  try{const result=await apiCall('/api/shop-card-save',payload);await refreshCaseDetail();$('singleSaveStatus').textContent=result.notificationWarning?'✅ تم الحفظ، لكن تعذر إيصال بعض إشعارات Telegram':'✅ تم حفظ البطاقة';}
  catch(e){$('singleSaveStatus').textContent='❌ '+e.message;}finally{singleSaveBusy=false;$('singleSave').disabled=false;}
 }
+function shopLogStamp(value){
+ const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value||'—');
+ const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Algiers',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).map(x=>[x.type,x.value]));
+ return `${parts.hour}:${parts.minute} ${parts.day}/${parts.month}/${parts.year}`;
+}
+const shopArabicFields={Customer_Name:'العميل',Customer_Phone:'رقم الهاتف',Product:'الجهاز',Brand:'العلامة',Model:'الموديل',Serial_Number:'الرقم التسلسلي',Issue_Description:'العطل المصرح به',Status:'الحالة',Current_Location:'الموقع الحالي',Assigned_Technician:'التقني المكلف',Diagnosis:'التشخيص الحالي',Service_Mode:'نوع الطلب'};
+function shopLogTitle(parent,date,actor){const head=document.createElement('strong');head.className='shop-log-title';head.textContent=shopLogStamp(date)+(actor?' · '+actor:'');parent.append(head);}
 function toggleSingleLog(type){
  const showHistory=type==='history',area=$(showHistory?'singleHistory':'singleDiagnoses'),other=$(showHistory?'singleDiagnoses':'singleHistory');other.hidden=true;area.hidden=!area.hidden;
  if(area.hidden)return;area.replaceChildren();const d=caseDetailData||{};
- if(!showHistory){const rows=[...(d.interventions||[])].reverse();if(!rows.length)area.textContent='لا توجد تشخيصات';for(const r of rows)area.append(detailEvent(readableDate(r.Started_At),r.Technician||'',r.Diagnosis||r.Work_Performed||r.Result||'إنشاء الطلب'));return;}
+ if(!showHistory){
+  const rows=[...(d.interventions||[])].reverse();if(!rows.length)area.textContent='لا توجد تشخيصات';
+  for(const r of rows){const card=document.createElement('div');card.className='event';shopLogTitle(card,r.Started_At,r.Technician||'');const content=document.createElement('div');content.textContent=r.Diagnosis||r.Work_Performed||r.Result||'إنشاء طلب إصلاح جديد';card.append(content);area.append(card);}
+  return;
+ }
  const rows=(d.history||[]).filter(r=>!['INTERVENTION_CREATED','STATUS_CHANGED'].includes(r.Action)&&r.Field!=='Diagnosis'&&r.Action!=='OPERATION_SAVED');
- const groups=new Map();for(const r of rows){const op=(r.Notes||'').match(/Operation_ID:([^ ]+)/)?.[1]||r.Event_ID; if(!groups.has(op))groups.set(op,[]);groups.get(op).push(r);}
+ const groups=new Map();for(const r of rows){const op=(r.Notes||'').match(/Operation_ID:([^ ]+)/)?.[1]||r.Event_ID;if(!groups.has(op))groups.set(op,[]);groups.get(op).push(r);}
  if(!groups.size)area.textContent='لا توجد تعديلات مسجلة';
  for(const entries of [...groups.values()].reverse()){
-  const first=entries[0],card=document.createElement('div');card.className='event';card.append(detailEvent('تعديل البطاقة',readableDate(first.Timestamp)+' · '+first.Actor,''));
+  const first=entries[0],card=document.createElement('div');card.className='event';shopLogTitle(card,first.Timestamp,'');
+  const actor=document.createElement('small');actor.textContent=first.Actor||'';card.append(actor);
   const table=document.createElement('table');table.style.cssText='width:100%;font-size:12px;border-collapse:collapse';
-  for(const values of [['الحقل','السابق','الجديد'],...entries.map(x=>[x.Field,x.Old_Value,x.New_Value])]){const tr=document.createElement('tr');for(const v of values){const td=document.createElement('td');td.textContent=v||'—';td.style.cssText='padding:5px;border-bottom:1px solid #ddd;overflow-wrap:anywhere';tr.append(td)}table.append(tr)}card.append(table);area.append(card);
+  for(const values of [['الحقل','السابق','الجديد'],...entries.map(x=>[shopArabicFields[x.Field]||x.Field,x.Old_Value,x.New_Value])]){const tr=document.createElement('tr');for(const v of values){const td=document.createElement('td');td.textContent=v||'—';td.style.cssText='padding:5px;border-bottom:1px solid #ddd;overflow-wrap:anywhere';tr.append(td)}table.append(tr)}card.append(table);area.append(card);
  }
 }
 
