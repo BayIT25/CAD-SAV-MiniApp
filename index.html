@@ -90,9 +90,51 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 .admin-edit-card .admin-buttons{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
 .admin-edit-card .admin-buttons button{margin:0;width:100%}
 @media(min-width:760px){.admin-edit-card .admin-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-edit-card .admin-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ===== CAD SAV V2.0: Presentation-only design system ===== */
+:root{--cad-blue:#0876b8;--cad-blue-dark:#075580;--cad-border:#dce6ef;--cad-ink:#17314a;--cad-soft:#f3f7fb;--cad-radius:14px}
+body{font-family:system-ui,'Segoe UI',Tahoma,Arial,sans-serif!important;line-height:1.6!important;background:var(--tg-theme-bg-color,#f4f7fa)!important}
+#appMain{max-width:1120px;margin-inline:auto}
+#appMain>section:not([hidden]){animation:cadAppear .17s ease}
+@keyframes cadAppear{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:none}}
+#appMain .panel,.case-pane>.panel,.admin-edit-card,.detail-field,.result{border:1px solid var(--cad-border);border-radius:var(--cad-radius);box-shadow:0 2px 12px #0e44630a}
+#appMain .panel{background:var(--tg-theme-secondary-bg-color,#fff);padding:clamp(14px,2.2vw,22px)}
+input,textarea,select{border-color:#c7d4df;border-radius:10px;transition:border-color .15s,box-shadow .15s;min-width:0}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #70b9e9;outline-offset:1px}
+button{border-radius:10px;transition:filter .18s,transform .18s;min-height:42px}
+button:not(:disabled):hover{filter:brightness(.96)}button:not(:disabled):active{transform:translateY(1px)}
+.nav-tile{border:1px solid var(--cad-border);border-radius:15px;box-shadow:0 3px 18px #1245650d}
+.nav-tile:hover{border-color:#9fcce7;box-shadow:0 6px 22px #1245651b}
+.field-table th,.shop-table th{background:#eaf3fa;color:#173c58;font-weight:750}
+.field-table tr:hover,.shop-table tr:hover{background:#edf6fc54}
+.field-gallery{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.field-gallery button{border:1px solid #d1e0eb;border-radius:12px;min-height:100px;box-shadow:0 3px 12px #0e446312}
+#fieldPhotosBox{border:1px solid #cbdfea;background:var(--tg-theme-secondary-bg-color,#f9fcff)}
+#fieldPhotosBox h3{display:flex;align-items:center;gap:9px}
+.cad-photo-picker{display:flex;align-items:center;gap:11px;border:1.5px dashed #92bbd8;border-radius:12px;padding:13px;background:#e9f5fc;color:#155c89;cursor:pointer;font-size:14px;font-weight:700}
+.cad-photo-picker svg{width:24px;height:24px;flex:none}.cad-photo-picker small{display:block;color:#557c95;font-weight:400;font-size:12px}
+.cad-photo-picker input{display:none}.cad-photo-picker:focus-within{outline:2px solid #66b1e2}
+.admin-edit-card{background:var(--tg-theme-secondary-bg-color,#fff);padding:clamp(14px,2vw,22px)}
+.admin-edit-card .admin-buttons button{border-radius:10px}
+.shop-log-title{font-size:15px;line-height:1.6}.shop-log-content{font-size:16px;line-height:1.8}
+/* Unified global header; direction is intentionally LTR to keep CAD on the left */
+.cad-app-header{position:sticky;top:0;z-index:120;width:100%;direction:ltr;display:grid;grid-template-columns:minmax(180px,auto) minmax(0,1fr) minmax(140px,auto);align-items:center;gap:clamp(12px,2vw,28px);min-height:94px;padding:12px clamp(15px,3vw,36px);background:var(--tg-theme-bg-color,#fff);border-bottom:1px solid #dce6ef;box-shadow:0 4px 18px #0b38510c;box-sizing:border-box}
+.cad-header-brand{display:flex;align-items:center;gap:12px;min-width:0}.cad-header-logo{width:64px;height:64px;object-fit:contain;flex:none}.cad-header-brandtext{display:flex;flex-direction:column;line-height:1.35}.cad-header-brandtext strong{font-size:22px;color:var(--cad-blue);letter-spacing:.15px}.cad-header-brandtext small{font-size:12px;color:#6c8295;white-space:nowrap}
+.cad-header-page{min-width:0;direction:rtl;text-align:right;justify-self:stretch}.cad-header-page h2{font-size:21px;margin:0 0 3px;color:var(--tg-theme-text-color,var(--cad-ink));display:flex;align-items:center;gap:9px}.cad-header-page h2 .cad-page-icon{display:inline-flex;width:31px;height:31px;justify-content:center;align-items:center;border-radius:9px;background:#eaf4fc;color:var(--cad-blue);font-size:18px}.cad-header-page p{font-size:12px;line-height:1.5;color:var(--tg-theme-hint-color,#688093);margin:0}
+.cad-header-actions{direction:rtl;display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:130px}.cad-header-actions button{margin:0;padding:7px 12px;min-height:34px;font-size:12px;width:100%;white-space:nowrap}.cad-header-actions button[hidden]{display:none!important}
+.cad-desktop-bar{display:none!important}
+@media(min-width:760px){#homeScreen>.brand-card{display:none}#appMain{padding-top:18px}.cad-app-header{min-height:104px}.cad-header-logo{width:68px;height:68px}}
+@media(max-width:759px){.cad-app-header{min-height:68px;padding:9px 12px;grid-template-columns:minmax(0,1fr) auto;gap:8px}.cad-header-brand{display:none}.cad-header-page h2{font-size:17px}.cad-header-page p{display:none}.cad-header-page h2 .cad-page-icon{width:29px;height:29px}.cad-header-actions{min-width:74px}.cad-header-actions button{padding:7px;font-size:11px}.cad-header-actions #cadHeaderFullscreen{display:none!important}#appMain{padding-top:8px}.page-heading{display:none}#serviceScreen .page-heading{display:none}.modal .modal-top{padding-top:10px}}
+@media(min-width:760px){.page-heading{display:none}.modal{padding-top:calc(110px + env(safe-area-inset-top));z-index:105}.cad-app-header{z-index:150}}
+@media(prefers-reduced-motion:reduce){#appMain>section:not([hidden]){animation:none}button{transition:none}}
+
 </style>
 </head>
 <body>
+<header id="cadGlobalHeader" class="cad-app-header" role="banner" aria-label="شريط التنقل الرئيسي">
+  <div class="cad-header-brand"><img id="cadHeaderLogo" class="cad-header-logo" alt="شعار CAD"><div class="cad-header-brandtext"><strong>CAD SAV</strong><small>خدمة ما بعد البيع · <span data-app-version>V2.0.0</span></small></div></div>
+  <div class="cad-header-page"><h2><span id="cadHeaderPageIcon" class="cad-page-icon" aria-hidden="true">🏠</span><span id="cadHeaderPageName">الرئيسية</span></h2><p id="cadHeaderPageDesc">الوصول إلى خدمات ما بعد البيع</p></div>
+  <div class="cad-header-actions"><button id="cadHeaderFullscreen" type="button" class="secondary" onclick="cadRequestDesktopFullscreen()">⛶ ملء الشاشة</button><button id="cadHeaderBack" type="button" class="secondary" onclick="cadGoBack()">← العودة</button></div>
+</header>
 <main id="appMain">
 <div class="cad-desktop-bar"><button id="cadFullscreenButton" type="button" class="secondary" onclick="cadRequestDesktopFullscreen()" hidden>⛶ توسيع / استعادة النافذة</button></div>
 <section id="homeScreen" class="home-screen">
@@ -242,7 +284,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.13.6';
+const APP_VERSION='V2.0.0';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -971,6 +1013,55 @@ function adminRenderLocation(loc,isNew=false){
 }
 
 checkAccessAgain();
+
+
+/* CAD V2: one shared visual header, without modifying business workflows */
+const CAD_PAGES={homeScreen:['🏠','الرئيسية','الوصول السريع إلى خدمات ما بعد البيع'],shopDirectory:['🔧','إصلاح الأجهزة','استقبال الأجهزة ومتابعة ملفات الصيانة'],fieldDirectory:['🚚','التدخلات الخارجية','تسجيل ومتابعة التدخلات الميدانية'],serviceScreen:['➕','استقبال جديد','إنشاء ملف صيانة أو طلب تدخل خارجي'],adminSettingsScreen:['⚙️','الإعدادات','إدارة المستخدمين والمواقع وطلبات الانضمام'],caseModal:['🧾','بطاقة صيانة الجهاز','عرض وتحديث ملف الصيانة الإلكتروني'],serialModal:['🔎','البحث والمسح','قراءة الرقم التسلسلي أو إدخاله'],labelModal:['🏷️','ملصق QR','طباعة أو تصدير ملصق الجهاز']};
+function cadCurrentPage(){
+ for(const id of ['labelModal','caseModal','serialModal']){const e=$(id);if(e&&!e.hidden)return id;}
+ for(const id of ['adminSettingsScreen','serviceScreen','shopDirectory','fieldDirectory','homeScreen']){const e=$(id);if(e&&!e.hidden)return id;}
+ return 'homeScreen';
+}
+function cadUpdateHeader(){
+ const id=cadCurrentPage(),data=CAD_PAGES[id]||CAD_PAGES.homeScreen;
+ let [ico,title,desc]=data;
+ if(id==='serviceScreen'&&$('serviceMode')?.value==='FIELD'){ico='🚚';title='طلب تدخل خارجي';desc='تسجيل بيانات التدخل الخارجي';}
+ if(id==='adminSettingsScreen'){const tabs=[['users','👥','إدارة المستخدمين','الحسابات والصلاحيات'],['locations','📍','إدارة المواقع','الفروع والورشات والمستودعات']];for(const [t,i,n,d] of tabs){const panel=$('admin'+t[0].toUpperCase()+t.slice(1)+'Panel');if(panel&&!panel.hidden){ico=i;title=n;desc=d;break;}}}
+ if(id==='caseModal'&&$('singleShopCard')?.hidden===false){title='بطاقة صيانة الجهاز';}
+ $('cadHeaderPageIcon').textContent=ico;$('cadHeaderPageName').textContent=title;$('cadHeaderPageDesc').textContent=desc;
+ const back=$('cadHeaderBack');back.hidden=id==='homeScreen';
+ const fs=$('cadHeaderFullscreen');fs.hidden=!cadDesktopTelegram;fs.textContent=tg?.isFullscreen?'▣ استعادة النافذة':'⛶ ملء الشاشة';
+}
+function cadGoBack(){
+ const id=cadCurrentPage();
+ const scope=$(id),btn=scope?.querySelector('.modal-top .back-small,.modal-top button.secondary,.page-heading .back-small');
+ if(btn&&btn.offsetParent!==null){btn.click();return;}
+ if(id==='labelModal'&&typeof closeLabel==='function')closeLabel();
+ else if(id==='caseModal'&&typeof closeCaseDetail==='function')closeCaseDetail();
+ else if(id==='serialModal'&&typeof closeSerialModal==='function')closeSerialModal();
+ else if(id==='adminSettingsScreen'&&typeof closeAdminSettings==='function')closeAdminSettings();
+ else if(id==='shopDirectory'&&typeof closeShopDirectory==='function')closeShopDirectory();
+ else if(id==='fieldDirectory'&&typeof closeFieldDirectory==='function')closeFieldDirectory();
+ else if(id==='serviceScreen'&&typeof backHome==='function')backHome();
+ requestAnimationFrame(cadUpdateHeader);
+}
+function cadInitV2(){
+ const logo=document.querySelector('#homeScreen .brand-logo');if(logo)$('cadHeaderLogo').src=logo.src;
+ const box=$('fieldPhotosBox'),inp=$('fieldPhotoInput');
+ if(box){const h=box.querySelector('h3');if(h)h.textContent='🖼️ صور التدخل';}
+ if(inp&&!document.querySelector('.cad-photo-picker')){
+  const label=document.createElement('label');label.className='cad-photo-picker';label.htmlFor='fieldPhotoInput';
+  label.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m4 17 5-5 3.5 3.5 2.5-2.5 5 5"/><path d="M17 6v5m-2.5-2.5h5"/></svg><span>إضافة صور التدخل<small>اضغط لاختيار صور من الجهاز</small></span>';
+  inp.parentNode.insertBefore(label,inp);label.appendChild(inp);
+ }
+ const watched=['homeScreen','shopDirectory','fieldDirectory','serviceScreen','adminSettingsScreen','caseModal','serialModal','labelModal','adminUsersPanel','adminLocationsPanel','adminRequestsPanel','singleShopCard'];
+ let pending=false;const ob=new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;cadUpdateHeader();});});
+ for(const id of watched){const el=$(id);if(el)ob.observe(el,{attributes:true,attributeFilter:['hidden']});}
+ $('serviceMode')?.addEventListener('change',cadUpdateHeader);
+ if(tg){tg.onEvent?.('fullscreenChanged',cadUpdateHeader);tg.onEvent?.('fullscreenFailed',cadUpdateHeader);}
+ cadUpdateHeader();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cadInitV2,{once:true});else cadInitV2();
 
 </script>
 <section id="labelModal" class="modal" role="dialog" aria-modal="true" hidden>
