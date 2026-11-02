@@ -75,7 +75,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 
 @media(min-width:760px){main#appMain,.modal-inner{max-width:1120px;width:100%}}
 
-/* V1.13.5 manager settings */
+/* V1.13.6 manager settings */
 .admin-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0}
 .admin-tabs button{font-size:12px;padding:10px 3px;margin:0;min-width:0;overflow-wrap:anywhere}
 .admin-tabs button.selected{background:var(--tg-theme-button-color,#0876b8);color:var(--tg-theme-button-text-color,#fff)}
@@ -83,6 +83,13 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 .admin-edit-card .grid{gap:8px}.admin-edit-card label{margin:9px 0 4px;font-size:13px}
 .admin-edit-card .admin-check{display:flex;align-items:center;gap:8px}.admin-edit-card .admin-check input{width:20px;height:20px}
 @media(min-width:760px){#adminSettingsScreen{max-width:1120px;margin-inline:auto}.admin-tabs button{font-size:14px}}
+/* One column inside phone/compact Mini Apps; multiple fields only when viewport truly wide. */
+.admin-edit-card .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.admin-edit-card .admin-form-grid>div{min-width:0}
+.admin-edit-card .admin-form-grid input,.admin-edit-card .admin-form-grid select{width:100%;min-width:0}
+.admin-edit-card .admin-buttons{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+.admin-edit-card .admin-buttons button{margin:0;width:100%}
+@media(min-width:760px){.admin-edit-card .admin-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-edit-card .admin-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -235,7 +242,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.13.5';
+const APP_VERSION='V1.13.6';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -250,11 +257,12 @@ function cadRequestDesktopFullscreen(){
  try{if(tg.isFullscreen&&typeof tg.exitFullscreen==='function')tg.exitFullscreen();else if(!tg.isFullscreen)tg.requestFullscreen();}catch(e){console.warn('Telegram fullscreen unavailable',e?.message||e);}
  cadRefreshFullscreenButton();
 }
+function cadAutoFullscreen(){if(!cadDesktopTelegram||!tg||tg.isFullscreen||typeof tg.requestFullscreen!=='function')return;try{tg.requestFullscreen();}catch(e){console.warn('Desktop auto fullscreen declined',e?.message||e);}}
 if(tg && cadDesktopTelegram){
  tg.onEvent?.('fullscreenChanged',cadRefreshFullscreenButton);
  tg.onEvent?.('fullscreenFailed',cadRefreshFullscreenButton);
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cadRefreshFullscreenButton,{once:true});
- else cadRefreshFullscreenButton();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{cadRefreshFullscreenButton();cadAutoFullscreen();},{once:true});
+ else {cadRefreshFullscreenButton();cadAutoFullscreen();}
 }
 let serialValue='', saving=false, lookupVersion=0, lookupResult=null, activeCaseId='', caseDetailData=null, caseTab='info';
 let appMe=null,assignmentRequestId=crypto.randomUUID(),assignmentBusy=false;
@@ -877,7 +885,7 @@ async function loadAccessRequests(){
  }catch(e){$('accessManagerStatus').textContent='تعذر تحميل الطلبات: '+e.message;}
 }
 
-// V1.13.5 manager settings: request approvals, user directory and locations.
+// V1.13.6 manager settings: request approvals, user directory and locations.
 let adminUsersCache=[],adminLocationsCache=[];
 function adminEl(tag,textValue){const e=document.createElement(tag);if(textValue!==undefined)e.textContent=String(textValue);return e;}
 function adminField(box,labelText,value,options){
@@ -917,7 +925,7 @@ function adminNewUser(){adminRenderUser({id:'',name:'',role:'BRANCH_MANAGER',loc
 function adminRenderUser(u,isNew=false){
  const parent=$('adminUsersList'),box=adminEl('div');box.className='admin-edit-card';
  const heading=adminEl('strong',isNew?'➕ مستخدم جديد':(u.name||u.id));box.append(heading);
- const g=adminEl('div');g.className='grid';box.append(g);
+ const g=adminEl('div');g.className='admin-form-grid';box.append(g);
  const id=adminField(g,'Telegram User ID',u.id),name=adminField(g,'اسم المستخدم',u.name);
  id.dir='ltr';id.readOnly=!isNew;id.inputMode='numeric';
  const role=adminField(g,'الدور',u.role,ADMIN_ROLES.map(x=>({value:x,label:ROLE_LABELS[x]||x})));
@@ -925,7 +933,8 @@ function adminRenderUser(u,isNew=false){
  const rebuild=()=>{const selected=site.value;site.replaceChildren();for(const o of adminSiteOptions(role.value,adminLocationsCache,selected)){const el=adminEl('option',o.label);el.value=o.value;site.append(el);}site.value=role.value==='EXTERNAL_TECH'?'':selected;site.disabled=role.value==='EXTERNAL_TECH';};
  role.addEventListener('change',rebuild);rebuild();
  const active=adminCheckbox(box,'حساب مفعل',u.active);
- const save=adminEl('button','💾 حفظ المستخدم');box.append(save);
+ const actions=adminEl('div');actions.className='admin-buttons';box.append(actions);const save=adminEl('button','💾 حفظ المستخدم');actions.append(save);
+ if(!isNew){const archive=adminEl('button','🗑 حذف المستخدم');archive.className='secondary';actions.append(archive);archive.addEventListener('click',async()=>{if(!confirm('إخفاء هذا المستخدم من القوائم مع الاحتفاظ بسجله في قاعدة البيانات؟'))return;archive.disabled=true;try{await apiCall('/api/admin-users-archive',{id:u.id,expected:[u.name,u.locationId,u.role,u.active]});await loadAdminUsers();}catch(e){status.textContent='تعذر الحذف: '+e.message;archive.disabled=false;}});}
  const status=adminEl('p');status.className='status';box.append(status);
  save.addEventListener('click',async()=>{
   save.disabled=true;status.textContent='جارٍ الحفظ...';
@@ -945,12 +954,13 @@ async function loadAdminLocations(){
 function adminNewLocation(){adminRenderLocation({id:'',name:'',type:'BRANCH',active:true},true);}
 function adminRenderLocation(loc,isNew=false){
  const box=adminEl('div');box.className='admin-edit-card';box.append(adminEl('strong',isNew?'➕ موقع جديد':(loc.name||loc.id)));
- const g=adminEl('div');g.className='grid';box.append(g);
+ const g=adminEl('div');g.className='admin-form-grid';box.append(g);
  const id=adminField(g,'معرف الموقع',loc.id),name=adminField(g,'اسم الموقع',loc.name);
  id.dir='ltr';id.readOnly=!isNew;
  const type=adminField(g,'نوع الموقع',loc.type,LOCATION_TYPES);
  const active=adminCheckbox(box,'الموقع مفعل',loc.active);
- const save=adminEl('button','💾 حفظ الموقع'),status=adminEl('p');status.className='status';box.append(save,status);
+ const actions=adminEl('div');actions.className='admin-buttons';box.append(actions);const save=adminEl('button','💾 حفظ الموقع'),status=adminEl('p');status.className='status';actions.append(save);box.append(status);
+ if(!isNew){const archive=adminEl('button','🗑 حذف الموقع');archive.className='secondary';actions.append(archive);archive.addEventListener('click',async()=>{if(!confirm('إخفاء هذا الموقع من القوائم مع الاحتفاظ بسجله؟ لا يمكن حذفه إذا ارتبط بمستخدم نشط أو جهاز مفتوح.'))return;archive.disabled=true;try{await apiCall('/api/admin-locations-archive',{id:loc.id,expected:[loc.name,loc.type,loc.active]});await loadAdminLocations();}catch(e){status.textContent='تعذر الحذف: '+e.message;archive.disabled=false;}});}
  save.addEventListener('click',async()=>{
   save.disabled=true;status.textContent='جارٍ الحفظ...';try{
    const data={id:id.value.trim(),name:name.value.trim(),type:type.value,active:active.checked};
