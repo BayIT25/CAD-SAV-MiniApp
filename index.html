@@ -127,11 +127,79 @@ button:not(:disabled):hover{filter:brightness(.96)}button:not(:disabled):active{
 @media(min-width:760px){.page-heading{display:none}.modal{padding-top:calc(110px + env(safe-area-inset-top));z-index:105}.cad-app-header{z-index:150}}
 @media(prefers-reduced-motion:reduce){#appMain>section:not([hidden]){animation:none}button{transition:none}}
 
+
+/* ===== CAD SAV V2.0.2: desktop readability and visual hierarchy ===== */
+/* Scope the visual changes to wider viewports: phone appearance stays intact. */
+@media (min-width: 760px) {
+  :root { --cad-desk-bg:#f8fafc; --cad-desk-surface:#ffffff; --cad-desk-text:#182c3e; --cad-desk-muted:#5f7182; --cad-desk-border:#dbe5ee; }
+  html { font-size:16px; }
+  body { font-family:Tahoma,Arial,'Segoe UI',sans-serif!important; font-size:15px; line-height:1.65!important; background:var(--cad-desk-bg)!important; color:var(--tg-theme-text-color,var(--cad-desk-text)); }
+  #appMain { padding-top:24px; }
+  #appMain .panel, #appMain .case-pane>.panel, #appMain .admin-edit-card, #appMain .result, #appMain .detail-field,
+  #appMain .identity-card, #appMain .nav-tile, #fieldPhotosBox {
+    background:var(--cad-desk-surface)!important;
+    border:1px solid var(--cad-desk-border);
+    box-shadow:0 2px 9px rgba(20,60,90,.035);
+  }
+  #appMain .panel { padding:20px 24px; }
+  #appMain .nav-tile { padding:19px 22px; margin-bottom:12px; }
+  #appMain .nav-tile b { font-size:18px; }
+  #appMain .nav-tile small { font-size:13px;color:var(--cad-desk-muted); }
+  #appMain .home-intro { font-size:16px; }
+  .cad-app-header { background:#fff; }
+  .cad-header-page h2 { font-family:Tahoma,Arial,sans-serif; font-size:21px; }
+  .cad-header-page p { font-size:13px; color:var(--cad-desk-muted); }
+  label,.admin-edit-card label { font-size:14px; }
+  input,textarea,select { background:#fff!important; border:1px solid #cbd9e4; color:var(--tg-theme-text-color,var(--cad-desk-text)); font-size:15px; }
+  input::placeholder,textarea::placeholder { color:#778897; }
+  .secondary { background:#f6f9fc; border-color:#cbd9e4; }
+  .hint,.version { color:var(--cad-desk-muted);font-size:13px; }
+  /* The filter selectors stay visually separate from the data table. */
+  #fieldDirectory>.panel { background:#fff!important; overflow:visible; }
+  .field-filter-grid { width:min(100%,580px); max-width:none; margin:16px 0 18px; align-items:start;position:relative; z-index:15; }
+  .field-filter { position:relative; isolation:isolate; }
+  .field-filter[open] { z-index:30; }
+  .field-filter summary { background:#fff!important; border:1px solid #b9cbda; color:var(--cad-desk-text); font-size:14px; font-weight:600; padding:12px 14px; }
+  .field-filter[open] summary { border-color:#2989bf; box-shadow:0 0 0 2px rgba(41,137,191,.10); }
+  .field-filter .filter-options { position:absolute;z-index:45;top:calc(100% + 5px);right:0;left:0; max-height:240px;overflow-y:auto; background:#fff!important;border:1px solid #c0d1df; box-shadow:0 12px 28px rgba(25,55,80,.17);padding:8px; }
+  .field-filter .filter-choice { font-size:14px; padding:9px 7px; border-radius:7px; }
+  .field-filter .filter-choice:hover { background:#f1f7fc; }
+  .field-filter .filter-choice input {background:#fff!important;}
+  .field-table,.shop-table { font-size:15px; }
+  .field-table th,.shop-table th { background:#eff6fb; color:#1d4664; font-size:14px; }
+  .field-table td,.shop-table td { background:#fff; font-size:14px; }
+  .field-table tbody tr:hover td,.shop-table tbody tr:hover td { background:#f6fbff; }
+  .admin-edit-card { background:#fff!important; }
+  .field-case-meta { background:#f7fafc!important; }
+}
+
+
+/* CAD SAV V2.0.2 — approved enterprise typography: Arial. */
+html, body, button, input, select, textarea, option, table, th, td,
+label, summary, .cad-app-header, .cad-header-page h2, .cad-header-brandtext,
+.admin-edit-card, .field-filter, .field-table, .shop-table {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+body { font-size:15px; line-height:1.55!important; }
+.cad-header-page h2 { font-size:20px!important; font-weight:700; }
+.cad-header-brandtext strong { font-weight:700; }
+.panel h3, .case-pane h3, .admin-edit-card h3 { font-size:16px; font-weight:700; }
+label, input, textarea, select { font-size:15px!important; }
+button { font-size:14px; font-weight:700; }
+.field-table, .shop-table, .field-table th, .field-table td,
+.shop-table th, .shop-table td { font-size:14px!important; }
+.hint, .cad-header-page p, .cad-header-brandtext small { font-size:12px; }
+@media (min-width:760px) {
+  .cad-header-page h2 { font-size:20px!important; }
+  .field-filter summary, .field-filter .filter-choice { font-size:14px!important; }
+  .field-filter summary { background:#fff!important; color:#182c3e!important; }
+}
+
 </style>
 </head>
 <body>
 <header id="cadGlobalHeader" class="cad-app-header" role="banner" aria-label="شريط التنقل الرئيسي">
-  <div class="cad-header-brand"><img id="cadHeaderLogo" class="cad-header-logo" alt="شعار CAD"><div class="cad-header-brandtext"><strong>CAD SAV</strong><small>خدمة ما بعد البيع · <span data-app-version>V2.0.0</span></small></div></div>
+  <div class="cad-header-brand"><img id="cadHeaderLogo" class="cad-header-logo" alt="شعار CAD"><div class="cad-header-brandtext"><strong>CAD SAV</strong><small>خدمة ما بعد البيع · <span data-app-version>V2.0.2</span></small></div></div>
   <div class="cad-header-page"><h2><span id="cadHeaderPageIcon" class="cad-page-icon" aria-hidden="true">🏠</span><span id="cadHeaderPageName">الرئيسية</span></h2><p id="cadHeaderPageDesc">الوصول إلى خدمات ما بعد البيع</p></div>
   <div class="cad-header-actions"><button id="cadHeaderFullscreen" type="button" class="secondary" onclick="cadRequestDesktopFullscreen()">⛶ ملء الشاشة</button><button id="cadHeaderBack" type="button" class="secondary" onclick="cadGoBack()">← العودة</button></div>
 </header>
@@ -284,7 +352,7 @@ button:not(:disabled):hover{filter:brightness(.96)}button:not(:disabled):active{
 </section>
 <script>
 'use strict';
-const APP_VERSION='V2.0.0';
+const APP_VERSION='V2.0.2';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
