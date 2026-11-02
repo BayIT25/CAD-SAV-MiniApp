@@ -143,6 +143,19 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
   <p class="hint" id="caseSubtitle">جاري تحميل البيانات...</p>
   <div id="caseLoading" class="status" role="status"></div>
   <button id="caseLabelButton" type="button" onclick="showLabel(activeCaseId)" hidden>🏷️ ملصق QR لهذا الملف</button>
+  <section id="singleShopCard" class="panel" hidden>
+    <h3>🔧 بطاقة الجهاز الإلكترونية</h3>
+    <div class="grid"><div><label>العميل</label><input id="singleCustomer"></div><div><label>الهاتف</label><input id="singlePhone"></div></div>
+    <div class="grid"><div><label>الجهاز</label><input id="singleProduct"></div><div><label>العلامة</label><input id="singleBrand"></div></div>
+    <div class="grid"><div><label>الموديل</label><input id="singleModel"></div><div><label>الرقم التسلسلي</label><input id="singleSerial" dir="ltr"></div></div>
+    <label>العطل المصرح به</label><textarea id="singleIssue"></textarea>
+    <div class="grid"><div><label>الموقع الحالي</label><select id="singleLocation"></select></div><div><label>التقني المكلف</label><select id="singleTech"></select></div></div>
+    <label>الحالة</label><select id="singleStatus"><option value="جديد">جديد</option><option value="قيد الإصلاح">قيد الإصلاح</option><option value="في انتظار قطعة">في انتظار قطعة</option><option value="قيد المتابعة">قيد المتابعة</option><option value="جاهز للتسليم">جاهز للتسليم</option></select>
+    <label>التشخيص الحالي</label><textarea id="singleDiagnosis" placeholder="أدخل التشخيص"></textarea>
+    <button type="button" id="singleSave" onclick="saveSingleShopCard()">💾 حفظ التعديلات</button><p class="status" id="singleSaveStatus"></p>
+    <div class="grid"><button type="button" class="secondary" onclick="toggleSingleLog('history')">🕘 سجل التعديلات</button><button type="button" class="secondary" onclick="toggleSingleLog('diagnosis')">🛠 سجل التشخيصات</button></div>
+    <div class="panel" id="singleHistory" hidden></div><div class="panel" id="singleDiagnoses" hidden></div>
+  </section>
   <div id="caseContent" hidden>
    <div class="result"><b id="caseNumber" dir="ltr"></b><div id="caseState"></div></div>
    <nav class="detail-tabs four-tabs" role="tablist" aria-label="أقسام بطاقة الصيانة"><button type="button" id="tabInfo" onclick="showCaseTab('info')">معلومات الجهاز</button><button type="button" id="tabInterventions" onclick="showCaseTab('interventions')">التشخيصات</button><button type="button" id="tabMovements" onclick="showCaseTab('movements')">الحركة</button><button type="button" id="tabHistory" onclick="showCaseTab('history')">السجل</button></nav>
@@ -193,7 +206,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.13.1';
+const APP_VERSION='V1.13.2';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -380,6 +393,7 @@ async function openCaseDetail() {
 function closeCaseDetail() {
   $('interventionForm').hidden=true;
   $('movementPanel').hidden=true;
+  $('singleShopCard').hidden=true;
   $('caseModal').hidden=true;
   document.body.style.overflow='';
 }
@@ -392,6 +406,16 @@ async function refreshCaseDetail() {
     if($('caseModal').hidden)return;
     caseDetailData=data;
     const record=data.case;
+    if(record.Service_Mode!=='FIELD'){
+      $('caseContent').hidden=true;$('singleShopCard').hidden=false;
+      $('caseNumber').textContent=record.Case_ID;
+      $('caseLabelButton').hidden=false;
+      $('caseState').textContent='الحالة: '+record.Status;
+      $('caseSubtitle').textContent='استمارة الجهاز الإلكترونية — '+record.Case_ID;
+      await populateSingleShopCard(data);
+      loading.textContent='';return;
+    }
+    $('singleShopCard').hidden=true;
      const permissions=data.permissions||{};
      $('newInterventionButton').hidden=!permissions.intervene;
      $('assignmentPanel').hidden=!permissions.assign||record.Service_Mode==='FIELD';
@@ -422,6 +446,49 @@ async function refreshCaseDetail() {
     loading.textContent='❌ تعذر تحميل بطاقة الصيانة: '+e.message;
   }
 }
+let singleSaveBusy=false;
+async function populateSingleShopCard(data){
+ const r=data.case,p=data.permissions||{};
+ const keys={Customer:'Customer_Name',Phone:'Customer_Phone',Product:'Product',Brand:'Brand',Model:'Model',Serial:'Serial_Number',Issue:'Issue_Description',Diagnosis:'Diagnosis'};
+ for(const [key,field] of Object.entries(keys))$('single'+key).value=r[field]||'';
+ const loc=$('singleLocation');loc.replaceChildren();for(const l of appMe?.locations||[])loc.add(new Option(l.name,l.id));
+ if(![...loc.options].some(o=>o.value===r.Current_Location))loc.add(new Option(r.Current_Location||'غير محدد',r.Current_Location||''));loc.value=r.Current_Location||'';
+ loc.disabled=!p.move;
+ $('singleStatus').value=r.Status||'جديد';if(!$('singleStatus').value)$('singleStatus').add(new Option(r.Status,r.Status));
+ const tech=$('singleTech');tech.replaceChildren(new Option('— دون إحالة —',''));
+ const current=String(r.Assigned_Technician||'');
+ try{const result=await apiCall('/api/shop-technicians',{caseId:activeCaseId});for(const t of result.technicians||[])tech.add(new Option(t.name,t.id));}catch(e){console.warn(e.message)}
+ if(current&&![...tech.options].some(o=>o.value===current))tech.add(new Option(current,current));tech.value=current;
+ tech.disabled=!p.assign;
+ for(const key of ['Customer','Phone','Product','Brand','Model','Serial','Issue','Status'])$('single'+key).disabled=!p.edit;
+ $('singleDiagnosis').disabled=!p.intervene;
+ $('singleSave').disabled=!(p.edit||p.intervene||p.assign);
+ $('singleSaveStatus').textContent='';$('singleHistory').hidden=true;$('singleDiagnoses').hidden=true;
+}
+async function saveSingleShopCard(){
+ if(singleSaveBusy||!caseDetailData?.case)return;
+ const r=caseDetailData.case;
+ const payload={caseId:activeCaseId,expectedUpdatedAt:r.Updated_At,requestId:crypto.randomUUID(),location:$('singleLocation').value,technicianUserId:$('singleTech').value,status:$('singleStatus').value,diagnosis:$('singleDiagnosis').value};
+ for(const key of ['Customer','Phone','Product','Brand','Model','Serial','Issue'])payload[key.toLowerCase()]=$('single'+key).value.trim();
+ if(payload.location!==r.Current_Location&&!await confirmAction('تأكيد انتقال مسؤولية الجهاز فور الحفظ إلى الموقع المحدد؟'))return;
+ singleSaveBusy=true;$('singleSave').disabled=true;$('singleSaveStatus').textContent='جارٍ الحفظ...';
+ try{const result=await apiCall('/api/shop-card-save',payload);await refreshCaseDetail();$('singleSaveStatus').textContent=result.notificationWarning?'✅ تم الحفظ، لكن تعذر إيصال بعض إشعارات Telegram':'✅ تم حفظ البطاقة';}
+ catch(e){$('singleSaveStatus').textContent='❌ '+e.message;}finally{singleSaveBusy=false;$('singleSave').disabled=false;}
+}
+function toggleSingleLog(type){
+ const showHistory=type==='history',area=$(showHistory?'singleHistory':'singleDiagnoses'),other=$(showHistory?'singleDiagnoses':'singleHistory');other.hidden=true;area.hidden=!area.hidden;
+ if(area.hidden)return;area.replaceChildren();const d=caseDetailData||{};
+ if(!showHistory){const rows=[...(d.interventions||[])].reverse();if(!rows.length)area.textContent='لا توجد تشخيصات';for(const r of rows)area.append(detailEvent(readableDate(r.Started_At),r.Technician||'',r.Diagnosis||r.Work_Performed||r.Result||'إنشاء الطلب'));return;}
+ const rows=(d.history||[]).filter(r=>!['INTERVENTION_CREATED','STATUS_CHANGED'].includes(r.Action)&&r.Field!=='Diagnosis'&&r.Action!=='OPERATION_SAVED');
+ const groups=new Map();for(const r of rows){const op=(r.Notes||'').match(/Operation_ID:([^ ]+)/)?.[1]||r.Event_ID; if(!groups.has(op))groups.set(op,[]);groups.get(op).push(r);}
+ if(!groups.size)area.textContent='لا توجد تعديلات مسجلة';
+ for(const entries of [...groups.values()].reverse()){
+  const first=entries[0],card=document.createElement('div');card.className='event';card.append(detailEvent('تعديل البطاقة',readableDate(first.Timestamp)+' · '+first.Actor,''));
+  const table=document.createElement('table');table.style.cssText='width:100%;font-size:12px;border-collapse:collapse';
+  for(const values of [['الحقل','السابق','الجديد'],...entries.map(x=>[x.Field,x.Old_Value,x.New_Value])]){const tr=document.createElement('tr');for(const v of values){const td=document.createElement('td');td.textContent=v||'—';td.style.cssText='padding:5px;border-bottom:1px solid #ddd;overflow-wrap:anywhere';tr.append(td)}table.append(tr)}card.append(table);area.append(card);
+ }
+}
+
 function showCaseTab(tab) {
   if(!['info','interventions','movements','history'].includes(tab))tab='info';
   caseTab=tab;
