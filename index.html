@@ -60,6 +60,13 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 #fieldStatusBox{margin-top:14px}
 @media(min-width:760px){.field-meta-dates{gap:24px}}
 .field-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:9px;margin-top:8px}.field-gallery button{display:block;border:1px solid #cad7e3;background:var(--tg-theme-secondary-bg-color,#f4f8fc);padding:6px;border-radius:9px;color:inherit;min-width:0}.field-gallery img{width:100%;height:95px;object-fit:cover;border-radius:6px}.field-gallery small{font-size:10px;overflow-wrap:anywhere}
+/* V1.13 — device directory reuses existing field-table layout. */
+.shop-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.shop-toolbar button{width:auto;margin:0}.shop-search{margin-top:8px}
+.shop-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.shop-filters select{min-width:0;font-size:12px;padding:9px 6px}
+.shop-table td{white-space:normal;min-width:75px}.shop-table td:first-child{direction:ltr;text-align:right;white-space:nowrap}
+@media(max-width:540px){.shop-filters{grid-template-columns:1fr 1fr}.shop-filters select:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -74,11 +81,21 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
   <button type="button" class="secondary" onclick="checkAccessAgain()">↻ التحقق من الموافقة</button>
 </section>
 <section id="authorizedHome" hidden><p class="home-intro">اختر نوع الخدمة للمتابعة</p>
-  <button type="button" class="nav-tile" onclick="openService('IN_SHOP')"><span class="nav-emoji">🔧</span><span><b>إصلاح أجهزة</b><small>استقبال الجهاز · البحث · التشخيص · الحركة</small></span><span class="nav-chevron">‹</span></button>
+  <button type="button" class="nav-tile" onclick="openShopDirectory()"><span class="nav-emoji">🔧</span><span><b>إصلاح أجهزة</b><small>استقبال الجهاز · البحث · التشخيص · الحركة</small></span><span class="nav-chevron">‹</span></button>
   <button type="button" class="nav-tile" onclick="openFieldDirectory()"><span class="nav-emoji">🏠</span><span><b>تدخلات خارجية</b><small>طلبات الزبائن · الإحالات · التدخل الميداني</small></span><span class="nav-chevron">‹</span></button>
   <div id="managerAccessPanel" class="panel" hidden><h3>👥 طلبات الانضمام</h3>
 <button type="button" class="secondary" onclick="loadAccessRequests()">↻ تحديث الطلبات</button><div id="accessList"></div><p id="accessManagerStatus" class="status"></p></div>
 </section><p id="homeNotice" class="status" role="status"></p>
+</section>
+<section id="shopDirectory" hidden>
+ <div class="page-heading"><button type="button" class="secondary back-small" onclick="closeShopDirectory()">← العودة</button><h2>🔧 إصلاح الأجهزة</h2></div>
+ <p class="hint">قائمة الأجهزة وبطاقات الصيانة الإلكترونية · <span data-app-version></span></p>
+ <div class="shop-toolbar"><button id="shopNewButton" type="button" onclick="newShopReception()">➕ استقبال جهاز</button><div class="field-actions"><button type="button" class="secondary compact-button" onclick="resetShopFilters()">مسح الفلاتر</button><button type="button" class="secondary compact-button" onclick="loadShopDirectory()">↻ تحديث</button></div></div>
+ <div class="panel"><label for="shopSearch">بحث في الملفات والأجهزة</label><input id="shopSearch" class="shop-search" placeholder="رقم الملف، التسلسلي، الجهاز أو الزبون" oninput="renderShopDirectory()" autocomplete="off">
+ <div class="shop-filters"><select id="shopStatusFilter" aria-label="تصفية حسب الحالة" onchange="renderShopDirectory()"><option value="">كل الحالات</option></select><select id="shopLocationFilter" aria-label="تصفية حسب الموقع" onchange="renderShopDirectory()"><option value="">كل المحطات</option></select><select id="shopTechFilter" aria-label="تصفية حسب التقني" onchange="renderShopDirectory()"><option value="">كل التقنيين</option></select></div>
+ <p id="shopDirectoryStatus" class="status" role="status"></p>
+ <div class="table-scroll"><table class="field-table shop-table"><thead><tr><th>رقم الملف</th><th>الجهاز / الزبون</th><th>الموقع</th><th>التقني</th><th>الحالة</th><th>البطاقة</th></tr></thead><tbody id="shopRows"></tbody></table></div>
+ </div>
 </section>
 <section id="fieldDirectory" hidden>
  <div class="page-heading"><button type="button" class="secondary back-small" onclick="closeFieldDirectory()">← العودة</button><h2>🏠 التدخلات الخارجية</h2></div>
@@ -170,7 +187,7 @@ main,.modal-inner{max-width:520px;margin:auto}h2{margin:0 0 4px}.version{font-si
 </section>
 <script>
 'use strict';
-const APP_VERSION='V1.12.8.2';
+const APP_VERSION='V1.13.0';
 function paintAppVersion(){document.querySelectorAll('[data-app-version]').forEach(e=>e.textContent=APP_VERSION);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paintAppVersion);else paintAppVersion();
 const API='https://cad-sav-api-176972661374.europe-west1.run.app';
@@ -186,8 +203,70 @@ function message(text){if(tg?.showAlert && tg.initData)tg.showAlert(text);else a
 function confirmAction(text){return new Promise(done=>{if(tg?.showConfirm && tg.initData)tg.showConfirm(text,done);else done(confirm(text))})}
 const ROLE_LABELS={SAV_MANAGER:'مسؤول المصلحة',BRANCH_MANAGER:'مسؤول الفرع',WAREHOUSE_MANAGER:'مسؤول المستودع',INTERNAL_TECH:'التقني الداخلي',EXTERNAL_TECH:'التقني الخارجي'};
 let fieldData=[],fieldOpenFromList=false,editingFieldCaseId='',editingFieldUpdatedAt='';
+let shopData=[],shopOpenFromList=false,shopListVersion=0;
 function openService(mode){$('homeScreen').hidden=true;$('serviceScreen').hidden=false;$('serviceMode').value=mode;$('serviceHeading').textContent=mode==='FIELD'?'تدخلات خارجية':'إصلاح أجهزة';$('serviceCaption').textContent=mode==='FIELD'?'طلبات الصيانة لدى الزبائن':'استقبال الأجهزة والبحث عن ملفات الصيانة';serviceModeChanged();window.scrollTo(0,0);}
-function backHome(){if(saving)return;const field=fieldOpenFromList;editingFieldCaseId='';editingFieldUpdatedAt='';clearFieldDraft();$('serviceScreen').hidden=true;if(field){$('fieldDirectory').hidden=false;fieldOpenFromList=false;loadFieldDirectory();}else $('homeScreen').hidden=false;window.scrollTo(0,0);}
+function backHome(){if(saving)return;const field=fieldOpenFromList,shop=shopOpenFromList;editingFieldCaseId='';editingFieldUpdatedAt='';clearFieldDraft();$('serviceScreen').hidden=true;if(field){$('fieldDirectory').hidden=false;fieldOpenFromList=false;loadFieldDirectory();}else if(shop){$('shopDirectory').hidden=false;shopOpenFromList=false;loadShopDirectory();}else $('homeScreen').hidden=false;window.scrollTo(0,0);}
+
+// V1.13 — read-only directory and navigation into existing electronic case card.
+function openShopDirectory(){
+  $('homeScreen').hidden=true;$('serviceScreen').hidden=true;$('fieldDirectory').hidden=true;
+  $('shopDirectory').hidden=false;shopOpenFromList=false;
+  $('shopNewButton').hidden=!['SAV_MANAGER','BRANCH_MANAGER'].includes(appMe?.role);
+  loadShopDirectory();window.scrollTo(0,0);
+}
+function closeShopDirectory(){shopListVersion++;$('shopDirectory').hidden=true;$('homeScreen').hidden=false;window.scrollTo(0,0);}
+function newShopReception(){
+  if(!['SAV_MANAGER','BRANCH_MANAGER'].includes(appMe?.role))return;
+  shopOpenFromList=true;clearFieldDraft();$('shopDirectory').hidden=true;
+  openService('IN_SHOP');$('saveButton').hidden=false;$('saveButton').textContent='💾 تسجيل الاستقبال';
+}
+function shopSelectOptions(id,values,labels){
+  const select=$(id),old=select.value;select.replaceChildren(new Option(labels,''));
+  [...new Set(values.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar')).forEach(v=>select.add(new Option(v,v)));
+  select.value=[...select.options].some(o=>o.value===old)?old:'';
+}
+async function loadShopDirectory(){
+  const v=++shopListVersion;$('shopDirectoryStatus').textContent='⏳ جارٍ تحميل الأجهزة...';
+  try{
+    const data=await apiCall('/api/shop-list',{});
+    if(v!==shopListVersion||$('shopDirectory').hidden)return;
+    shopData=data.devices||[];
+    const locationNames=new Map((data.locations||[]).map(l=>[l.id,l.name||l.id]));
+    shopData.forEach(d=>d.locationName=locationNames.get(d.currentLocation)||d.currentLocation||'غير محدد');
+    shopSelectOptions('shopStatusFilter',shopData.map(d=>d.status),'كل الحالات');
+    shopSelectOptions('shopLocationFilter',shopData.map(d=>d.locationName),'كل المحطات');
+    shopSelectOptions('shopTechFilter',shopData.map(d=>d.technician),'كل التقنيين');
+    renderShopDirectory();
+  }catch(e){if(v===shopListVersion)$('shopDirectoryStatus').textContent='❌ تعذر تحميل الأجهزة: '+e.message;}
+}
+function resetShopFilters(){
+  $('shopSearch').value='';['shopStatusFilter','shopLocationFilter','shopTechFilter'].forEach(id=>$(id).value='');renderShopDirectory();
+}
+function openShopCard(id){
+  if(!shopData.some(d=>d.caseId===id))return;
+  activeCaseId=id;openCaseDetail();
+}
+function renderShopDirectory(){
+  const query=$('shopSearch').value.trim().toLocaleLowerCase(),status=$('shopStatusFilter').value,
+    location=$('shopLocationFilter').value,technician=$('shopTechFilter').value;
+  const filtered=shopData.filter(d=>(!status||d.status===status)&&(!location||d.locationName===location)&&
+    (!technician||d.technician===technician)&&(!query||[d.caseId,d.serial,d.customer,d.product,d.brand,d.model].some(x=>String(x||'').toLocaleLowerCase().includes(query))));
+  const tbody=$('shopRows');tbody.replaceChildren();
+  $('shopDirectoryStatus').textContent=`${filtered.length} جهاز من أصل ${shopData.length}`;
+  if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='لا توجد أجهزة مطابقة';tr.append(td);tbody.append(tr);return;}
+  for(const d of filtered){
+    const tr=document.createElement('tr');tr.tabIndex=0;tr.dataset.caseId=d.caseId;
+    tr.title='انقر مرتين لفتح بطاقة الصيانة، أو المس الصف على الهاتف';
+    tr.addEventListener('dblclick',e=>{if(!e.target.closest('button'))openShopCard(d.caseId)});
+    tr.addEventListener('click',e=>{if(!e.target.closest('button')&&window.matchMedia('(pointer:coarse)').matches)openShopCard(d.caseId)});
+    tr.addEventListener('keydown',e=>{if(e.target===tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openShopCard(d.caseId)}});
+    for(const value of [d.caseId,[d.product,d.brand,d.model].filter(Boolean).join(' ')+' / '+(d.customer||'—'),d.locationName,d.technician,d.status]){
+      const td=document.createElement('td');td.textContent=value;tr.append(td);
+    }
+    const td=document.createElement('td'),btn=document.createElement('button');btn.type='button';btn.className='icon-action';btn.textContent='📂';
+    btn.title='فتح البطاقة الإلكترونية';btn.setAttribute('aria-label','فتح بطاقة '+d.caseId);btn.addEventListener('click',()=>openShopCard(d.caseId));td.append(btn);tr.append(td);tbody.append(tr);
+  }
+}
 
 function openFieldDirectory(){
  $('homeScreen').hidden=true;$('serviceScreen').hidden=true;$('fieldDirectory').hidden=false;
